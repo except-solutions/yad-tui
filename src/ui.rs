@@ -1,9 +1,9 @@
-use ratatui::Frame;
+use crate::model::*;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::prelude::Stylize;
 use ratatui::style::palette::tailwind;
-use ratatui::widgets::{Block, Borders, BorderType, List, ListItem};
-use crate::model::*;
+use ratatui::widgets::{Block, BorderType, Borders, List, ListItem};
+use ratatui::Frame;
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
     let vertical_layouts = Layout::default()

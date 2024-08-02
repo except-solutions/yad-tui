@@ -2,8 +2,8 @@ use std::io::{self, stdout};
 
 use ratatui::{
     crossterm::{
-        ExecutableCommand,
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+        ExecutableCommand,
     },
     prelude::*,
 };
@@ -11,7 +11,7 @@ use ratatui::{
 use yad_tui::events::handle_events;
 use yad_tui::model::*;
 use yad_tui::ui::ui;
-use yad_tui::update::{Message, update};
+use yad_tui::update::{update, Message};
 
 use crate::Message::*;
 

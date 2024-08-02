@@ -1,10 +1,10 @@
-use std::io;
-use std::time::Duration;
-use ratatui::crossterm::event;
-use ratatui::crossterm::event::{Event, KeyEventKind};
-use ratatui::crossterm::event::KeyCode;
 use crate::update::Message;
 use crate::update::Message::{Continue, Exit, MoveDown, MoveUp};
+use ratatui::crossterm::event;
+use ratatui::crossterm::event::KeyCode;
+use ratatui::crossterm::event::{Event, KeyEventKind};
+use std::io;
+use std::time::Duration;
 
 pub fn handle_events() -> io::Result<Option<Message>> {
     if event::poll(Duration::from_millis(250))? {
