@@ -1,4 +1,4 @@
-use crate::model::{File, Model};
+use crate::model::{Model};
 use crate::update::Message::{Continue, Exit, MoveDown, MoveUp};
 
 #[derive(PartialEq)]
@@ -29,7 +29,7 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
 }
 
 fn update_active_file(
-    mut model: &mut Model,
+    model: &mut Model,
     cond: fn(i32, usize) -> bool,
     mutator: fn(i32) -> i32,
 ) {

@@ -11,9 +11,8 @@ use ratatui::{
 use yad_tui::events::handle_events;
 use yad_tui::model::*;
 use yad_tui::ui::ui;
-use yad_tui::update::{update, Message};
+use yad_tui::update::{update};
 
-use crate::Message::*;
 
 fn init() -> Model {
     let previous = vec![File {
