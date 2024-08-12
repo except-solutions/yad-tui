@@ -8,4 +8,8 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.5.16", features = ["derive"] }
+home = "0.5.9"
 ratatui = "0.27.0"
+serde = { version = "1.0.206", features = ["derive"] }
+toml = "0.8.19"

@@ -1,8 +1,9 @@
+use crate::config::get_text_config;
 use crate::model::*;
-use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::Stylize;
 use ratatui::style::palette::tailwind;
-use ratatui::widgets::{Block, BorderType, Borders, List, ListItem};
+use ratatui::widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph};
 use ratatui::Frame;
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
@@ -31,6 +32,32 @@ pub fn ui(model: &mut Model, frame: &mut Frame) {
     frame.render_widget(previous_dir, vertical_layouts[0]);
     frame.render_widget(current_dir, vertical_layouts[1]);
     frame.render_widget(next_dir, vertical_layouts[2]);
+
+    if model.popup.show_config {
+        let config_text = get_text_config(model);
+        let title = model.config_path.display().to_string();
+        let block = Block::bordered().title(title);
+        let content = Paragraph::new(config_text).block(block);
+        let area = centered_rect(70, 50, frame.size());
+        frame.render_widget(Clear, area); //this clears out the background
+        frame.render_widget(content, area);
+    }
+}
+
+pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::vertical([
+        Constraint::Percentage((100 - percent_y) / 2),
+        Constraint::Percentage(percent_y),
+        Constraint::Percentage((100 - percent_y) / 2),
+    ])
+    .split(r);
+
+    Layout::horizontal([
+        Constraint::Percentage((100 - percent_x) / 2),
+        Constraint::Percentage(percent_x),
+        Constraint::Percentage((100 - percent_x) / 2),
+    ])
+    .split(popup_layout[1])[1]
 }
 
 fn to_list_item(file: &File) -> ListItem {
