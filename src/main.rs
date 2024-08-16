@@ -8,14 +8,16 @@ use ratatui::{
     prelude::*,
 };
 
+use yad_tui::cli::parse_args;
+use yad_tui::config::{get_config_toml, get_real_config_path};
 use yad_tui::events::handle_events;
 use yad_tui::model::*;
 use yad_tui::ui::ui;
-use yad_tui::update::{update, Message};
-
-use crate::Message::*;
+use yad_tui::update::update;
 
 fn init() -> Model {
+    let args = parse_args();
+    let config = get_config_toml(&args.conf);
     let previous = vec![File {
         name: String::from("abc"),
         active: true,
@@ -48,6 +50,9 @@ fn init() -> Model {
         previous_dir: previous,
         current_dir,
         sub_dir: next,
+        config,
+        popup: Popup { show_config: false },
+        config_path: get_real_config_path(&args.conf),
     }
 }
 
@@ -60,7 +65,6 @@ fn main() -> io::Result<()> {
     let mut current_message = handle_events()?;
     while current_message.is_some() {
         terminal.draw(|f| ui(&mut model, f))?;
-
         current_message = match handle_events()? {
             Some(m) => update(&mut model, m),
             None => None,
