@@ -21,33 +21,33 @@ fn init() -> Model {
     let previous = vec![File {
         name: String::from("abc"),
         active: true,
-        file_type: NodeType::File
+        file_type: NodeType::File,
     }];
     let next = vec![File {
         name: String::from("abc"),
         active: true,
-        file_type: NodeType::File
+        file_type: NodeType::File,
     }];
     let current_dir = vec![
         File {
             name: String::from("abc"),
             active: true,
-            file_type: NodeType::Dir
+            file_type: NodeType::Dir,
         },
         File {
             name: String::from("def"),
             active: false,
-            file_type: NodeType::File
+            file_type: NodeType::File,
         },
         File {
             name: String::from("xyz"),
             active: false,
-            file_type: NodeType::File
+            file_type: NodeType::File,
         },
         File {
             name: String::from("abc"),
             active: false,
-            file_type: NodeType::Dir
+            file_type: NodeType::Dir,
         },
     ];
 

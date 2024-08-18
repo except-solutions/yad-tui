@@ -1,11 +1,10 @@
 use crate::config::Config;
 use std::path::PathBuf;
 
-
 #[derive(Clone, Debug)]
 pub enum NodeType {
     File,
-    Dir
+    Dir,
 }
 
 #[derive(Debug, Clone)]
@@ -34,7 +33,7 @@ pub struct Model {
 impl Model {
     pub fn set_active_file(&mut self, new_pos_index: i32) -> Result<(), String> {
         if new_pos_index < 0 || new_pos_index >= self.current_dir.len() as i32 {
-           Err::<(), String>(format!("Inavlid index {new_pos_index}"))
+            Err::<(), String>(format!("Inavlid index {new_pos_index}"))
         } else {
             self.active_file_row_index = new_pos_index;
             self.current_dir = self
