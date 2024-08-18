@@ -63,11 +63,11 @@ fn init() -> Model {
 }
 
 fn main() -> io::Result<()> {
+    let mut model = init();
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
-    let mut model = init();
     let mut current_message = handle_events()?;
     while current_message.is_some() {
         terminal.draw(|f| ui(&mut model, f))?;

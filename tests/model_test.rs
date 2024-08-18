@@ -2,13 +2,15 @@ use yad_tui::model::{File, Model, NodeType};
 
 #[test]
 fn test_wrong_indexes() {
-    let mut m = test_model();
-    m.set_active_file(-1);
-    assert_eq!(m.active_file_row_index, 0)
+    let mut m = setup();
+    let too_small_index = -1;
+    let too_big_index = (m.current_dir.len() + 1) as i32;
+    assert_eq!(m.set_active_file(too_small_index), Err(format!("Inavlid index {too_small_index}")));
+    assert_eq!(m.set_active_file(too_big_index), Err(format!("Inavlid index {too_big_index}")));
 }
 
 
-fn test_model() -> Model {
+fn setup() -> Model {
 
     let previous = vec![File {
         name: String::from("abc"),
@@ -45,8 +47,11 @@ fn test_model() -> Model {
 
     Model {
         active_file_row_index: 0,
+        popup: Default::default(),
+        config: Default::default(),
         previous_dir: previous,
         current_dir,
         sub_dir: next,
+        config_path: Default::default(),
     }
 }
