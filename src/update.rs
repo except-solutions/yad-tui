@@ -38,6 +38,9 @@ fn update_active_file(model: &mut Model, cond: fn(i32, usize) -> bool, mutator: 
     let new_active_file_row_index_guess = mutator(model.active_file_row_index);
 
     if cond(new_active_file_row_index_guess, current_dir_size) {
-        model.set_active_file(new_active_file_row_index_guess)
+        match model.set_active_file(new_active_file_row_index_guess) {
+            Ok(()) => (),
+            Err(m) => println!("{}", m),
+        }
     };
 }

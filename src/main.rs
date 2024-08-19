@@ -21,27 +21,33 @@ fn init() -> Model {
     let previous = vec![File {
         name: String::from("abc"),
         active: true,
+        file_type: NodeType::File,
     }];
     let next = vec![File {
         name: String::from("abc"),
         active: true,
+        file_type: NodeType::File,
     }];
     let current_dir = vec![
         File {
             name: String::from("abc"),
             active: true,
+            file_type: NodeType::Dir,
         },
         File {
             name: String::from("def"),
             active: false,
+            file_type: NodeType::File,
         },
         File {
             name: String::from("xyz"),
             active: false,
+            file_type: NodeType::File,
         },
         File {
             name: String::from("abc"),
             active: false,
+            file_type: NodeType::Dir,
         },
     ];
 
@@ -57,11 +63,11 @@ fn init() -> Model {
 }
 
 fn main() -> io::Result<()> {
+    let mut model = init();
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
-    let mut model = init();
     let mut current_message = handle_events()?;
     while current_message.is_some() {
         terminal.draw(|f| ui(&mut model, f))?;

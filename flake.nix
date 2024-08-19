@@ -48,6 +48,8 @@
           ];
           packages = [
             pkgs.cargo-watch
+            pkgs.gcc
+            pkgs.rustup
             config.process-compose.cargo-doc-live.outputs.package
           ];
         };
