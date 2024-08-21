@@ -2,7 +2,6 @@ use crate::config::get_text_config;
 use crate::model::*;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::Stylize;
-use ratatui::style::palette::tailwind;
 use ratatui::widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph};
 use ratatui::Frame;
 
@@ -62,8 +61,11 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 
 fn to_list_item(file: &File) -> ListItem {
     if file.active {
-        ListItem::new(file.name.clone()).bg(tailwind::RED.c950)
+        ListItem::new(file.name.clone()).black().bold().on_blue()
     } else {
-        ListItem::new(file.name.clone())
+        match file.file_type {
+            NodeType::Dir => ListItem::new(file.name.clone()).on_black(),
+            NodeType::File => ListItem::new(file.name.clone()).on_black().dim().blue(),
+        }
     }
 }

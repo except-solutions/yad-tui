@@ -11,50 +11,33 @@ use ratatui::{
 use yad_tui::cli::parse_args;
 use yad_tui::config::{get_config_toml, get_real_config_path};
 use yad_tui::events::handle_events;
+use yad_tui::fs;
 use yad_tui::model::*;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
 
 fn init() -> Model {
     let args = parse_args();
+
     let config = get_config_toml(&args.conf);
+    let current_dirs = fs::get_init_fs_tree(&config.main.get("sync_dir_path"));
+
     let previous = vec![File {
         name: String::from("abc"),
         active: true,
         file_type: NodeType::File,
     }];
+
     let next = vec![File {
         name: String::from("abc"),
         active: true,
         file_type: NodeType::File,
     }];
-    let current_dir = vec![
-        File {
-            name: String::from("abc"),
-            active: true,
-            file_type: NodeType::Dir,
-        },
-        File {
-            name: String::from("def"),
-            active: false,
-            file_type: NodeType::File,
-        },
-        File {
-            name: String::from("xyz"),
-            active: false,
-            file_type: NodeType::File,
-        },
-        File {
-            name: String::from("abc"),
-            active: false,
-            file_type: NodeType::Dir,
-        },
-    ];
 
     Model {
         active_file_row_index: 0,
         previous_dir: previous,
-        current_dir,
+        current_dir: current_dirs,
         sub_dir: next,
         config,
         popup: Popup { show_config: false },
