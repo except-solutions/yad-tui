@@ -6,7 +6,7 @@ use toml;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Config {
-    main: HashMap<String, String>,
+    pub main: HashMap<String, String>,
 }
 
 pub fn get_config_toml(path: &String) -> Config {

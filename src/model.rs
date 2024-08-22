@@ -1,7 +1,7 @@
 use crate::config::Config;
 use std::path::PathBuf;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Ord, Eq, PartialOrd, PartialEq)]
 pub enum NodeType {
     File,
     Dir,
