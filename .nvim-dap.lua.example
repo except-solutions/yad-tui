@@ -5,7 +5,6 @@ local codelldb_path = codelldb_root .. "adapter/codelldb"
 local liblldb_path = codelldb_root .. "lldb/lib/liblldb.so"
 dap.adapters.lldb = {
     type = "executable",
-    command = "/nix/store/pb0ls9djw139jrz16mdfay486mcb1ddm-lldb-14.0.6/bin/lldb-vscode", -- adjust as needed
     name = "lldb",
 }
 
