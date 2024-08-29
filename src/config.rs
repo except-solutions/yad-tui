@@ -11,14 +11,9 @@ pub struct Api {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MetaDb {
-    pub path: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub api: Api,
-    pub meta_db: MetaDb,
+    pub meta_db_path: String,
 }
 
 pub fn get_toml_config(path: &String) -> Config {
