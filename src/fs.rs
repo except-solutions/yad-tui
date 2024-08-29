@@ -1,9 +1,7 @@
 use crate::model::{File, NodeType};
 use std::fs;
 
-pub fn get_init_fs_tree(init_path: &Option<&String>) -> Vec<File> {
-    let config_path = init_path
-        .expect("Can`t read `sync_dir_path` from conf. Check conf `.config/yad/Config.toml`");
+pub fn get_init_fs_tree(config_path: &String) -> Vec<File> {
 
     match fs::read_dir(config_path) {
         Ok(entries) => {

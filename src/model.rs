@@ -19,7 +19,7 @@ pub struct Popup {
     pub show_config: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Model {
     pub previous_dir: Vec<File>,
     pub current_dir: Vec<File>,
