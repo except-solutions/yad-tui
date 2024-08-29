@@ -427,16 +427,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "json-db"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f0cde36027cb6a259da14b5d00d8bc64a5c00cf0d95eb289795338b8e24d5bd"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "keccak"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1191,7 +1181,6 @@ dependencies = [
  "clap",
  "home",
  "jammdb",
- "json-db",
  "ratatui",
  "serde",
  "serde_json",
