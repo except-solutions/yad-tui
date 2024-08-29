@@ -5,7 +5,6 @@ pub struct DiskClient {
     pub token: Option<String>,
 }
 
-
 impl DiskClient {
     fn auth(&self, code: String) {
         // TODO impl
