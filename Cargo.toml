@@ -11,7 +11,6 @@ version = "0.1.0"
 clap = { version = "4.5.16", features = ["derive"] }
 home = "0.5.9"
 jammdb = "0.11.0"
-json-db = "0.1.2"
 ratatui = "0.27.0"
 serde = { version = "1.0.206", features = ["derive"] }
 serde_json = "1.0.127"
