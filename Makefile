@@ -8,4 +8,4 @@ build-watch:
 	cargo watch -x build
 
 format:
-	treefmt
+	cargo fmt --all
