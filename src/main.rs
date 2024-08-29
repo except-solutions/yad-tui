@@ -9,15 +9,17 @@ use ratatui::{
 };
 
 use yad_tui::cli::parse_args;
-use yad_tui::config::{get_config_toml, get_real_config_path};
+use yad_tui::config::{get_real_config_path, get_toml_config};
 use yad_tui::events::handle_events;
+use yad_tui::meta_db::init_db;
 use yad_tui::model::*;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
 
 fn init() -> Model {
     let args = parse_args();
-    let config = get_config_toml(&args.conf);
+    let config = get_toml_config(&args.conf);
+    let (meta_db, meta) = init_db(&config);
     let previous = vec![File {
         name: String::from("abc"),
         active: true,

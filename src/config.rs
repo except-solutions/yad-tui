@@ -1,18 +1,38 @@
 use crate::model::Model;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 use toml;
 
-#[derive(Debug, Serialize, Deserialize, Default)]
-pub struct Config {
-    main: HashMap<String, String>,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Api {
+    pub api_url: String,
+    pub oauth_url: String,
+    pub client_id: String,
 }
 
-pub fn get_config_toml(path: &String) -> Config {
-    let real_path = get_real_config_path(&path);
-    let toml_data = std::fs::read_to_string(real_path)
-        .expect("Cannot read config file. Please run yad --init-conf");
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MetaDb {
+    pub path: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config {
+    pub api: Api,
+    pub meta_db: MetaDb,
+}
+
+pub fn get_toml_config(path: &String) -> Config {
+    let real_path = get_real_config_path(path);
+    let toml_data = std::fs::read_to_string(real_path.clone()).unwrap_or_else(|_| {
+        panic!(
+            "{}",
+            format!(
+                "Cannot read config file '{:?}'. Please run yad --init-conf",
+                real_path.clone()
+            )
+            .to_owned()
+        )
+    });
     let config: Config = toml::from_str(&*toml_data).unwrap();
     config
 }
