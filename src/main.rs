@@ -41,7 +41,13 @@ fn init() -> Model {
         current_dir: current_dirs,
         sub_dir: next,
         config,
-        popup: Popup { show_config: false },
+        popup: if meta.api_token.is_some() {
+            None
+        } else {
+            Some(Popup::LoginForm {
+                input: "".to_string(),
+            })
+        },
         config_path: get_real_config_path(&args.conf),
     }
 }
@@ -52,10 +58,10 @@ fn main() -> io::Result<()> {
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
-    let mut current_message = handle_events()?;
+    let mut current_message = handle_events(&model)?;
     while current_message.is_some() {
         terminal.draw(|f| ui(&mut model, f))?;
-        current_message = match handle_events()? {
+        current_message = match handle_events(&model)? {
             Some(m) => update(&mut model, m),
             None => None,
         };

@@ -1,5 +1,5 @@
 use yad_tui::{
-    config::{Api, Config},
+    config::{Api, Config, Main},
     meta_db::Meta,
     model::{File, Model, NodeType},
 };
@@ -61,12 +61,14 @@ fn setup() -> Model {
         sub_dir: next,
         config_path: Default::default(),
         config: Config {
+            main: Main {
+                meta_db_path: "".to_string(),
+            },
             api: Api {
                 api_url: "".to_string(),
                 oauth_url: "".to_string(),
                 client_id: "".to_string(),
             },
-            meta_db_path: "".to_string(),
         },
     }
 }

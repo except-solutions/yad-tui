@@ -9,7 +9,7 @@ pub struct Meta {
 
 pub fn init_db(config: &Config) -> (DB, Meta) {
     let home = home_dir();
-    let path = home.unwrap().join(Path::new(&config.meta_db_path[..]));
+    let path = home.unwrap().join(Path::new(&config.meta_db.path[..]));
     let app_cache_dir = path.parent().unwrap();
 
     if !app_cache_dir.exists() {
