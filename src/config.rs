@@ -10,10 +10,24 @@ pub struct Api {
     pub client_id: String,
 }
 
+impl Api {
+    pub fn auth_link(&self) -> String {
+        format!(
+            "{0}/authorize?response_type=code&client_id={1}",
+            self.oauth_url, self.client_id
+        )
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Main {
+    pub meta_db_path: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub api: Api,
-    pub meta_db_path: String,
+    pub main: Main,
 }
 
 pub fn get_toml_config(path: &String) -> Config {

@@ -1,4 +1,4 @@
-use crate::model::Model;
+use crate::model::{Model, Popup};
 use crate::update::Message::{Continue, Exit, MoveDown, MoveUp, ShowConfig};
 
 #[derive(PartialEq)]
@@ -8,6 +8,8 @@ pub enum Message {
     MoveDown,
     MoveUp,
     ShowConfig,
+    ClosePopup,
+    InputLoginFormWord(char),
 }
 
 pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
@@ -25,11 +27,25 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
             Some(Continue)
         }
         ShowConfig => {
-            model.popup.show_config = !model.popup.show_config;
+            model.popup = Some(Popup::Config);
             Some(Continue)
         }
         Continue => Some(Continue),
         Exit => None,
+        Message::ClosePopup => {
+            model.popup = None;
+            Some(Continue)
+        }
+        Message::InputLoginFormWord(word) => {
+            model.popup = model.popup.clone().and_then(|login_form| match login_form {
+                Popup::LoginForm { input } => Some(Popup::LoginForm {
+                    input: format!("{0}{1}", input, word),
+                }),
+                _ => None,
+            });
+
+            Some(Continue)
+        }
     }
 }
 
