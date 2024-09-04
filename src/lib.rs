@@ -6,5 +6,7 @@ pub mod fs;
 pub mod meta_db;
 pub mod model;
 pub mod ui;
+pub mod ui_tools;
 pub mod update;
+pub mod updaters;
 

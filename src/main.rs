@@ -45,10 +45,12 @@ fn init() -> Model {
             None
         } else {
             Some(Popup::LoginForm {
-                input: "".to_string(),
+                code_input: "".to_string(),
             })
         },
         config_path: get_real_config_path(&args.conf),
+        meta,
+        current_dir,
     }
 }
 

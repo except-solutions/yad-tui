@@ -1,5 +1,12 @@
 use crate::model::{Model, Popup};
 use crate::update::Message::{Continue, Exit, MoveDown, MoveUp, ShowConfig};
+use crate::updaters::login_form::{remove_last_symbol, update_input};
+
+#[derive(PartialEq)]
+pub enum InputAction {
+    InputChar(char),
+    DeleteChar,
+}
 
 #[derive(PartialEq)]
 pub enum Message {
@@ -9,7 +16,7 @@ pub enum Message {
     MoveUp,
     ShowConfig,
     ClosePopup,
-    InputLoginFormWord(char),
+    InputModeAction(InputAction),
 }
 
 pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
@@ -36,14 +43,12 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
             model.popup = None;
             Some(Continue)
         }
-        Message::InputLoginFormWord(word) => {
-            model.popup = model.popup.clone().and_then(|login_form| match login_form {
-                Popup::LoginForm { input } => Some(Popup::LoginForm {
-                    input: format!("{0}{1}", input, word),
-                }),
-                _ => None,
-            });
-
+        Message::InputModeAction(InputAction::InputChar(code_number)) => {
+            model.popup = update_input(model.popup.clone(), code_number);
+            Some(Continue)
+        }
+        Message::InputModeAction(InputAction::DeleteChar) => {
+            model.popup = remove_last_symbol(model.popup.clone());
             Some(Continue)
         }
     }
