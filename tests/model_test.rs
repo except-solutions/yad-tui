@@ -70,5 +70,6 @@ fn setup() -> Model {
                 client_id: "".to_string(),
             },
         },
+        meta: Meta { api_token: None },
     }
 }

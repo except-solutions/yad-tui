@@ -56,17 +56,18 @@ fn init() -> Model {
     Model {
         active_file_row_index: 0,
         previous_dir: previous,
-        current_dir,
         sub_dir: next,
         config,
         popup: if meta.api_token.is_some() {
             None
         } else {
             Some(Popup::LoginForm {
-                input: "".to_string(),
+                code_input: "".to_string(),
             })
         },
         config_path: get_real_config_path(&args.conf),
+        meta,
+        current_dir,
     }
 }
 

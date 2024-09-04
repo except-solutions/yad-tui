@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::{config::Config, meta_db::Meta};
 use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
@@ -17,7 +17,7 @@ pub struct File {
 #[derive(Debug, Clone)]
 pub enum Popup {
     Config,
-    LoginForm { input: String },
+    LoginForm { code_input: String },
 }
 
 #[derive(Debug)]
@@ -29,6 +29,7 @@ pub struct Model {
     pub popup: Option<Popup>,
     pub config: Config,
     pub config_path: PathBuf,
+    pub meta: Meta,
 }
 
 impl Model {
