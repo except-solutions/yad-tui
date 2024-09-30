@@ -67,4 +67,3 @@ pub fn send_form(model: &mut Model, code: String) {
         }
     };
 }
-

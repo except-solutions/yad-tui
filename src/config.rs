@@ -30,12 +30,11 @@ pub struct MetaDb {
     pub path: String,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub api: Api,
     pub meta_db: MetaDb,
-    pub main: Main
+    pub main: Main,
 }
 
 pub fn get_toml_config(path: &String) -> Config {

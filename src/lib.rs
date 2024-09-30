@@ -9,4 +9,3 @@ pub mod ui;
 pub mod ui_tools;
 pub mod update;
 pub mod updaters;
-

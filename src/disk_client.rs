@@ -20,8 +20,6 @@ pub struct SuccessAuth {
     pub refresh_token: String,
 }
 
-
-
 #[derive(Deserialize)]
 struct AuthError {
     error: String,
@@ -70,14 +68,13 @@ impl DiskClient {
                     Err(response_error) => {
                         log::error!("Unexpected response error: {}", response_error);
                         Err(format!("Unexpected error: {}", response_error))
-                    },
+                    }
                 }
             }
             Err(other_error) => {
                 log::error!("{}", other_error);
                 Err("Unknown error".to_string())
-            },
+            }
         }
     }
 }
-

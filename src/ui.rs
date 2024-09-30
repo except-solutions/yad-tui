@@ -1,11 +1,8 @@
 use crate::config::get_text_config;
 use crate::model::*;
+use crate::{model::Popup, ui_tools::login_ui::render_login_form};
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::Stylize;
-use crate::{
-    model::Popup,
-    ui_tools::login_ui::render_login_form,
-};
 use ratatui::widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph};
 use ratatui::Frame;
 

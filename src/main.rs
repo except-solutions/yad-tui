@@ -8,7 +8,6 @@ use ratatui::{
     prelude::*,
 };
 
-use yad_tui::{cli::parse_args, disk_client::DiskClient};
 use yad_tui::config::{get_real_config_path, get_toml_config};
 use yad_tui::events::handle_events;
 use yad_tui::fs;
@@ -16,6 +15,7 @@ use yad_tui::meta_db::init_db;
 use yad_tui::model::*;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
+use yad_tui::{cli::parse_args, disk_client::DiskClient};
 
 fn init() -> Model {
     let args = parse_args();
@@ -48,12 +48,12 @@ fn init() -> Model {
         } else {
             Some(Popup::LoginForm {
                 code_input: "".to_string(),
-                error_message: None
+                error_message: None,
             })
         },
         config_path: get_real_config_path(&args.conf),
         meta,
-        disk_client
+        disk_client,
     }
 }
 
@@ -77,4 +77,3 @@ fn main() -> io::Result<()> {
     stdout().execute(LeaveAlternateScreen)?;
     Ok(())
 }
-

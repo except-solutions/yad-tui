@@ -2,7 +2,6 @@ use crate::model::{File, NodeType};
 use std::fs;
 
 pub fn get_init_fs_tree(config_path: &String) -> Vec<File> {
-
     match fs::read_dir(config_path) {
         Ok(entries) => {
             let (results, errors): (Vec<_>, Vec<_>) = entries
