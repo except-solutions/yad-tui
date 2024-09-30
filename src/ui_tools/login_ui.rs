@@ -2,7 +2,6 @@ use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::Frame;
 
-use crate::model::Model;
 use crate::ui::centered_rect;
 use ratatui::widgets::{Block, Clear, Paragraph};
 use ratatui::{

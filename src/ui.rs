@@ -55,7 +55,10 @@ pub fn ui(model: &mut Model, frame: &mut Frame) {
             frame.render_widget(Clear, area); //this clears out the background
             frame.render_widget(content, area);
         }
-        Some(Popup::LoginForm { code_input }) => {
+        Some(Popup::LoginForm {
+            code_input,
+            error_message,
+        }) => {
             render_login_form(model.config.api.auth_link(), code_input.clone(), frame);
         }
         None => (),

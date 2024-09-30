@@ -1,4 +1,9 @@
-use crate::model::{Model, Popup};
+use crate::{
+    config::Api,
+    disk_client::DiskClient,
+    meta_db::Meta,
+    model::{Model, Popup},
+};
 
 const LOGIN_INPUT_MAX_DIGITS: u8 = 7;
 
@@ -24,17 +29,42 @@ fn update_form(
     mutator: impl Fn(String) -> String,
 ) -> Option<Popup> {
     popup.map(|p| match p {
-        Popup::LoginForm { code_input } => {
+        Popup::LoginForm {
+            code_input,
+            error_message: _,
+        } => {
             let is_valid_input = cond(code_input.clone());
 
             if is_valid_input {
                 Popup::LoginForm {
                     code_input: mutator(code_input),
+                    error_message: None,
                 }
             } else {
-                Popup::LoginForm { code_input }
+                Popup::LoginForm {
+                    code_input,
+                    error_message: None,
+                }
             }
         }
         any_popup => any_popup,
     })
 }
+
+pub fn send_form(model: &mut Model, code: String) {
+    match model.disk_client.auth(code.clone()) {
+        Ok(auth_response) => {
+            model.meta = Meta {
+                api_token: Some(auth_response.access_token),
+            };
+            model.popup = None;
+        }
+        Err(error_message) => {
+            model.popup = Some(Popup::LoginForm {
+                code_input: code.clone(),
+                error_message: Some(error_message),
+            })
+        }
+    };
+}
+

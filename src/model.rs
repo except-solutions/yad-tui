@@ -1,4 +1,4 @@
-use crate::{config::Config, meta_db::Meta};
+use crate::{config::Config, disk_client::DiskClient, meta_db::Meta};
 use std::path::PathBuf;
 
 #[derive(Clone, Debug, Ord, Eq, PartialOrd, PartialEq)]
@@ -17,7 +17,10 @@ pub struct File {
 #[derive(Debug, Clone)]
 pub enum Popup {
     Config,
-    LoginForm { code_input: String },
+    LoginForm {
+        code_input: String,
+        error_message: Option<String>,
+    },
 }
 
 #[derive(Debug)]
@@ -30,6 +33,7 @@ pub struct Model {
     pub config: Config,
     pub config_path: PathBuf,
     pub meta: Meta,
+    pub disk_client: DiskClient,
 }
 
 impl Model {

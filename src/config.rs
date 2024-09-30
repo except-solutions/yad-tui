@@ -8,6 +8,7 @@ pub struct Api {
     pub api_url: String,
     pub oauth_url: String,
     pub client_id: String,
+    pub client_secret: String,
 }
 
 impl Api {

@@ -3,29 +3,33 @@ use log;
 use serde::Deserialize;
 
 use crate::config::Config;
-use ureq::{Error, Error::Status, Response};
+use ureq::{Response, Error, Error::Status};
+
 
 #[derive(Deserialize)]
 enum AuthResponse {
     SuccessAuth,
     AuthError,
-    UnknwonError,
+    UnknwonError
 }
 
 #[derive(Deserialize)]
 pub struct SuccessAuth {
-    pub token_type: String,
+    token_type: String,
     pub access_token: String,
-    pub expires_in: i32,
-    pub refresh_token: String,
+    expires_in: i32,
+    refresh_token: String,
+    scope: String
 }
 
-
+struct UnknwonError {
+    error: String
+}
 
 #[derive(Deserialize)]
 struct AuthError {
     error: String,
-    error_description: String,
+    error_description: String
 }
 
 #[derive(Debug, Clone)]
@@ -38,15 +42,17 @@ pub struct DiskClient {
 }
 
 impl DiskClient {
+
     pub fn from_app_conf(conf: &Config) -> Self {
         DiskClient {
             api_url: conf.api.api_url.clone(),
             oauth_url: conf.api.oauth_url.clone(),
             client_id: conf.api.client_id.clone(),
             client_secret: conf.api.client_secret.clone(),
-            token: None,
+            token: None
         }
     }
+
 
     pub fn auth(&self, code: String) -> Result<SuccessAuth, String> {
         let url = &format!("{}/token", self.oauth_url);
@@ -54,30 +60,31 @@ impl DiskClient {
         log::info!("Try fetch api token, url: {}, code: {}", url, code);
         let response = ureq::post(url)
             .set("Authorization", &format!("Basic {}", token))
-            .send_form(&[("grant_type", "authorization_code"), ("code", &code)])
+            .send_form(&[
+                       ("grant_type", "authorization_code"),
+                       ("code", &code)
+            ])
             .map(|r| r.into_json::<SuccessAuth>());
 
-        match response {
+        // TODO refactor
+        let matched: Result<SuccessAuth, String> = match response {
             Ok(response) => Ok(response.unwrap()),
             Err(Error::Status(code, response)) => {
-                log::info!("Auth error response with code {}", code);
+
+                log::warn!("Auth error response with code {}", code);
 
                 match response.into_json::<AuthError>() {
                     Ok(body) => {
-                        log::info!("Auth error response body: {}", body.error);
+                        log::warn!("Auth error response body: {}", body.error);
                         Err(body.error)
-                    }
-                    Err(response_error) => {
-                        log::error!("Unexpected response error: {}", response_error);
-                        Err(format!("Unexpected error: {}", response_error))
                     },
+                    Err(v)   => Err(format!("Unexpected error: {}", v))
                 }
-            }
-            Err(other_error) => {
-                log::error!("{}", other_error);
-                Err("Unknown error".to_string())
             },
-        }
+            _ => Err("Unknown error".to_string())
+        };
+
+        matched
     }
 }
 

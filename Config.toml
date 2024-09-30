@@ -5,6 +5,8 @@ sync_dir_path = "/home/user/sync/dir/path"
 api_url = "https://api.yandex.net/v1"
 oauth_url = "https://oauth.yandex.ru"
 client_id = "47dc6152c0274ceab34dbf2e873bed50"
+client_secret = "994a5e7168dd43e7a5ed1de90a42fdbe"
 
 [meta_db]
 path = ".cache/yad/meta.db"
+

@@ -19,6 +19,7 @@ pub fn handle_events(model: &Model) -> io::Result<Option<Message>> {
                         Char('q') | Esc => Some(ClosePopup),
                         Char(word) => Some(InputModeAction(InputChar(word))),
                         Backspace => Some(InputModeAction(DeleteChar)),
+                        Enter => Some(InputModeAction(Send)),
                         _ => Some(Continue),
                     }
                 } else {
