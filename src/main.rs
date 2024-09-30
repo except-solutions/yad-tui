@@ -53,7 +53,6 @@ fn init() -> Model {
         },
         config_path: get_real_config_path(&args.conf),
         meta,
-        current_dir,
         disk_client
     }
 }

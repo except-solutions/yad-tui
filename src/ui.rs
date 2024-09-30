@@ -3,20 +3,11 @@ use crate::model::*;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::Stylize;
 use crate::{
-    model::{Popup, *},
-    config::get_text_config,
-    model::{self, Popup, *},
+    model::Popup,
     ui_tools::login_ui::render_login_form,
 };
 use ratatui::widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph};
 use ratatui::Frame;
-use ratatui::{
-    layout::{Alignment, Flex, Position},
-    widgets::Padding,
-};
-use ratatui::{
-    style::{Color, Style},
-};
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
     let vertical_layouts = Layout::default()
@@ -57,7 +48,8 @@ pub fn ui(model: &mut Model, frame: &mut Frame) {
         }
         Some(Popup::LoginForm {
             code_input,
-            error_message,
+            // TODO render error
+            error_message: _,
         }) => {
             render_login_form(model.config.api.auth_link(), code_input.clone(), frame);
         }
