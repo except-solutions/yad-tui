@@ -77,3 +77,4 @@ fn main() -> io::Result<()> {
     stdout().execute(LeaveAlternateScreen)?;
     Ok(())
 }
+
