@@ -1,4 +1,8 @@
-use yad_tui::model::{File, Model, NodeType};
+use yad_tui::{
+    config::{Api, Config, Main, MetaDb},
+    meta_db::Meta,
+    model::{File, Model, NodeType},
+};
 
 #[test]
 fn test_wrong_indexes() {
@@ -52,10 +56,31 @@ fn setup() -> Model {
     Model {
         active_file_row_index: 0,
         popup: Default::default(),
-        config: Default::default(),
         previous_dir: previous,
         current_dir,
         sub_dir: next,
         config_path: Default::default(),
+        config: Config {
+            main: Main {
+                sync_dir_path: "".to_string(),
+            },
+            api: Api {
+                api_url: "".to_string(),
+                oauth_url: "".to_string(),
+                client_id: "".to_string(),
+                client_secret: "".to_string(),
+            },
+            meta_db: MetaDb {
+                path: "".to_string(),
+            },
+        },
+        meta: Meta { api_token: None },
+        disk_client: yad_tui::disk_client::DiskClient {
+            api_url: "".to_string(),
+            oauth_url: "".to_string(),
+            client_id: "".to_string(),
+            client_secret: "".to_string(),
+            token: None,
+        },
     }
 }

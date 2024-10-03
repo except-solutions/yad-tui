@@ -1,23 +1,38 @@
+use crate::model::Model;
+use crate::update::InputAction::*;
 use crate::update::Message;
-use crate::update::Message::{Continue, Exit, MoveDown, MoveUp, ShowConfig};
+use crate::update::Message::*;
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::KeyCode;
 use ratatui::crossterm::event::{Event, KeyEventKind};
 use std::io;
 use std::time::Duration;
 
-pub fn handle_events() -> io::Result<Option<Message>> {
+pub fn handle_events(model: &Model) -> io::Result<Option<Message>> {
     if event::poll(Duration::from_millis(250))? {
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 use KeyCode::*;
-                return match key.code {
-                    Char('q') | Esc => Ok(Some(Exit)),
-                    Char('j') | Down => Ok(Some(MoveDown)),
-                    Char('k') | Up => Ok(Some(MoveUp)),
-                    Char('c') => Ok(Some(ShowConfig)),
-                    _ => Ok(Some(Continue)),
+
+                let message = if model.popup.is_some() {
+                    match key.code {
+                        Char('q') | Esc => Some(ClosePopup),
+                        Char(word) => Some(InputModeAction(InputChar(word))),
+                        Backspace => Some(InputModeAction(DeleteChar)),
+                        Enter => Some(InputModeAction(Send)),
+                        _ => Some(Continue),
+                    }
+                } else {
+                    match key.code {
+                        Char('q') | Esc => Some(Exit),
+                        Char('j') | Down => Some(MoveDown),
+                        Char('k') | Up => Some(MoveUp),
+                        Char('c') => Some(ShowConfig),
+                        _ => Some(Continue),
+                    }
                 };
+
+                return Ok(message);
             }
         }
     }

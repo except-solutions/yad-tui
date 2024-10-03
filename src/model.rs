@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::{config::Config, disk_client::DiskClient, meta_db::Meta};
 use std::path::PathBuf;
 
 #[derive(Clone, Debug, Ord, Eq, PartialOrd, PartialEq)]
@@ -14,20 +14,26 @@ pub struct File {
     pub file_type: NodeType,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct Popup {
-    pub show_config: bool,
+#[derive(Debug, Clone)]
+pub enum Popup {
+    Config,
+    LoginForm {
+        code_input: String,
+        error_message: Option<String>,
+    },
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Model {
     pub previous_dir: Vec<File>,
     pub current_dir: Vec<File>,
     pub sub_dir: Vec<File>,
     pub active_file_row_index: i32,
-    pub popup: Popup,
+    pub popup: Option<Popup>,
     pub config: Config,
     pub config_path: PathBuf,
+    pub meta: Meta,
+    pub disk_client: DiskClient,
 }
 
 impl Model {

@@ -8,19 +8,22 @@ use ratatui::{
     prelude::*,
 };
 
-use yad_tui::cli::parse_args;
-use yad_tui::config::{get_config_toml, get_real_config_path};
+use yad_tui::config::{get_real_config_path, get_toml_config};
 use yad_tui::events::handle_events;
 use yad_tui::fs;
+use yad_tui::meta_db::init_db;
 use yad_tui::model::*;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
+use yad_tui::{cli::parse_args, disk_client::DiskClient};
 
 fn init() -> Model {
     let args = parse_args();
 
-    let config = get_config_toml(&args.conf);
-    let current_dirs = fs::get_init_fs_tree(&config.main.get("sync_dir_path"));
+    let config = get_toml_config(&args.conf);
+    let (meta_db, meta) = init_db(&config);
+    let current_dirs = fs::get_init_fs_tree(&config.main.sync_dir_path);
+    let disk_client = DiskClient::from_app_conf(&config);
 
     let previous = vec![File {
         name: String::from("abc"),
@@ -40,8 +43,17 @@ fn init() -> Model {
         current_dir: current_dirs,
         sub_dir: next,
         config,
-        popup: Popup { show_config: false },
+        popup: if meta.api_token.is_some() {
+            None
+        } else {
+            Some(Popup::LoginForm {
+                code_input: "".to_string(),
+                error_message: None,
+            })
+        },
         config_path: get_real_config_path(&args.conf),
+        meta,
+        disk_client,
     }
 }
 
@@ -51,10 +63,11 @@ fn main() -> io::Result<()> {
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
-    let mut current_message = handle_events()?;
+    let mut current_message = handle_events(&model)?;
+
     while current_message.is_some() {
         terminal.draw(|f| ui(&mut model, f))?;
-        current_message = match handle_events()? {
+        current_message = match handle_events(&model)? {
             Some(m) => update(&mut model, m),
             None => None,
         };
