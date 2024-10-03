@@ -68,11 +68,11 @@ fn setup() -> Model {
                 api_url: "".to_string(),
                 oauth_url: "".to_string(),
                 client_id: "".to_string(),
-                client_secret: "".to_string()
+                client_secret: "".to_string(),
             },
             meta_db: MetaDb {
-                path: "".to_string()
-            }
+                path: "".to_string(),
+            },
         },
         meta: Meta { api_token: None },
         disk_client: yad_tui::disk_client::DiskClient {
@@ -80,8 +80,7 @@ fn setup() -> Model {
             oauth_url: "".to_string(),
             client_id: "".to_string(),
             client_secret: "".to_string(),
-            token: None
-        }
+            token: None,
+        },
     }
 }
-
