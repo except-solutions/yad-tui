@@ -12,3 +12,6 @@ run-watch:
 
 format:
 	cargo fmt --all
+
+test:
+	cargo test
