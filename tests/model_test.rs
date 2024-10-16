@@ -63,6 +63,7 @@ fn setup() -> Model {
         config: Config {
             main: Main {
                 sync_dir_path: "".to_string(),
+                cache_dir_path: "".to_string(),
                 log_level: DebugLevel::Debug,
             },
             api: Api {
