@@ -1,6 +1,8 @@
 use crate::model::Model;
+use log::{self, LevelFilter};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::str::FromStr;
 use toml;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,9 +22,38 @@ impl Api {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub enum DebugLevel {
+    Info,
+    Debug,
+}
+
+impl DebugLevel {
+    pub fn to_level_filter(&self) -> LevelFilter {
+        match &self {
+            DebugLevel::Info  => LevelFilter::Info,
+            DebugLevel::Debug => LevelFilter::Debug
+        }
+    }
+}
+
+
+impl FromStr for DebugLevel {
+    type Err = String;
+
+    fn from_str(input: &str) -> Result<DebugLevel, Self::Err> {
+        match input {
+            "info" => Ok(DebugLevel::Info),
+            "debug" => Ok(DebugLevel::Debug),
+            invalid => Err(format!("Invalid debug level {}", invalid)),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Main {
     pub sync_dir_path: String,
+    pub log_level: DebugLevel,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -39,6 +70,10 @@ pub struct Config {
 
 pub fn get_toml_config(path: &String) -> Config {
     let real_path = get_real_config_path(path);
+    log::info!(
+        "Try read log file from path: {:?}",
+        real_path.clone().into_os_string()
+    );
     let toml_data = std::fs::read_to_string(real_path.clone()).unwrap_or_else(|_| {
         panic!(
             "{}",
@@ -49,8 +84,7 @@ pub fn get_toml_config(path: &String) -> Config {
             .to_owned()
         )
     });
-    let config: Config = toml::from_str(&*toml_data).unwrap();
-    config
+    toml::from_str(&toml_data).unwrap()
 }
 
 pub fn get_real_config_path(path: &String) -> PathBuf {
@@ -65,3 +99,4 @@ pub fn get_real_config_path(path: &String) -> PathBuf {
 pub fn get_text_config(model: &mut Model) -> String {
     toml::to_string(&model.config).unwrap()
 }
+
