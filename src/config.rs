@@ -31,12 +31,11 @@ pub enum DebugLevel {
 impl DebugLevel {
     pub fn to_level_filter(&self) -> LevelFilter {
         match &self {
-            DebugLevel::Info  => LevelFilter::Info,
-            DebugLevel::Debug => LevelFilter::Debug
+            DebugLevel::Info => LevelFilter::Info,
+            DebugLevel::Debug => LevelFilter::Debug,
         }
     }
 }
-
 
 impl FromStr for DebugLevel {
     type Err = String;
@@ -99,4 +98,3 @@ pub fn get_real_config_path(path: &String) -> PathBuf {
 pub fn get_text_config(model: &mut Model) -> String {
     toml::to_string(&model.config).unwrap()
 }
-

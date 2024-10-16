@@ -53,7 +53,8 @@ fn init() -> Model {
         .build(
             Root::builder()
                 .appender("logfile")
-                .build(config.main.log_level.to_level_filter()))
+                .build(config.main.log_level.to_level_filter()),
+        )
         .unwrap();
 
     log4rs::init_config(log_config).unwrap();
