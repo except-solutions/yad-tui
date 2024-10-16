@@ -17,7 +17,7 @@ use yad_tui::ui::ui;
 use yad_tui::update::update;
 use yad_tui::{cli::parse_args, disk_client::DiskClient};
 
-use log::info;
+use log::{info, debug};
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
@@ -44,7 +44,7 @@ fn init() -> Model {
 
     let log_file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} [{l}] - {m}{n}")))
-        .build(format!("{}log/app.log", config.main.cahce_dir_path))
+        .build(format!("{}log/app.log", config.main.cache_dir_path))
         .unwrap();
 
     let log_config = Config::builder()
@@ -82,7 +82,7 @@ fn main() -> io::Result<()> {
     let mut model = init();
     info!("Start application");
     info!("Initialize application model");
-    log::debug!("Initializated model: {:?}", model);
+    debug!("Initializated model: {:?}", model);
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;

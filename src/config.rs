@@ -53,7 +53,7 @@ impl FromStr for DebugLevel {
 pub struct Main {
     pub sync_dir_path: String,
     pub log_level: DebugLevel,
-    pub cahce_dir_path: String,
+    pub cache_dir_path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
