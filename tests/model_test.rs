@@ -64,6 +64,7 @@ fn setup() -> Model {
             main: Main {
                 sync_dir_path: "".to_string(),
                 log_level: DebugLevel::Debug,
+                cahce_dir_path: "".to_string(),
             },
             api: Api {
                 api_url: "".to_string(),
