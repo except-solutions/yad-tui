@@ -62,6 +62,7 @@ fn setup() -> Model {
         config_path: Default::default(),
         config: Config {
             main: Main {
+                lang: "en".to_string(),
                 sync_dir_path: "".to_string(),
                 log_level: DebugLevel::Debug,
                 cache_dir_path: "".to_string(),

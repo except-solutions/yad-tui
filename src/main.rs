@@ -17,15 +17,22 @@ use yad_tui::ui::ui;
 use yad_tui::update::update;
 use yad_tui::{cli::parse_args, disk_client::DiskClient};
 
-use log::{info, debug};
+use log::{debug, info};
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
+#[macro_use]
+extern crate rust_i18n;
+use rust_i18n::t;
+
+i18n!("locales");
 
 fn init() -> Model {
+    let r = t!("hello");
     let args = parse_args();
 
     let config = get_toml_config(&args.conf);
+    rust_i18n::set_locale(config.main.lang.as_str());
     let (meta_db, meta) = init_db(&config);
     let current_dirs = fs::get_init_fs_tree(&config.main.sync_dir_path);
     let disk_client = DiskClient::from_app_conf(&config);
