@@ -1,0 +1,5 @@
+login_form:
+  go_to: "Go to"
+  please_log_in: "Please log in"
+  enter_code: "Enter code:"
+

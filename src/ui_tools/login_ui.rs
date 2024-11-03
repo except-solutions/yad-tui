@@ -1,6 +1,7 @@
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::Frame;
+use rust_i18n::t;
 
 use crate::ui::centered_rect;
 use ratatui::widgets::{Block, Clear, Paragraph};
@@ -22,12 +23,12 @@ pub fn render_login_form(auth_link: String, code_input: String, frame: &mut Fram
 
     let header = Paragraph::new("")
         .style(Style::default().fg(Color::Yellow))
-        .block(Block::bordered().title("Please log in!"));
+        .block(Block::bordered().title(t!("login_form.please_log_in").to_string()));
     let link_b = Block::new().padding(Padding::top(3));
-    let label_p = Paragraph::new(format!(" Go to: {}", auth_link))
+    let label_p = Paragraph::new(format!(" {}: {}", t!("login_form.go_to"), auth_link))
         .alignment(Alignment::Center)
         .block(link_b);
-    let input_b = Block::bordered().title("Enter code:");
+    let input_b = Block::bordered().title(t!("login_form.enter_code").to_string());
     let input_p = Paragraph::new(code_view(code_input))
         .centered()
         .block(input_b);
