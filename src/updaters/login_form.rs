@@ -1,6 +1,4 @@
 use crate::{
-    config::Api,
-    disk_client::DiskClient,
     meta_db::Meta,
     model::{Model, Popup},
 };

@@ -1,6 +1,9 @@
 run:
 	cargo run
 
+run-strict:
+	RUSTFLAGS="-D warnings" cargo run
+
 build:
 	cargo build
 

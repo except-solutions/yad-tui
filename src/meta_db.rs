@@ -1,6 +1,7 @@
 use crate::config::Config;
+use dirs::home_dir;
 use jammdb::DB;
-use std::{env::home_dir, fs, path::Path};
+use std::{fs, path::Path};
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct Meta {

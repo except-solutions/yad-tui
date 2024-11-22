@@ -1,9 +1,9 @@
-use base64::{alphabet::URL_SAFE, prelude::*};
+use base64::prelude::*;
 use log;
 use serde::Deserialize;
 
 use crate::config::Config;
-use ureq::{Error, Error::Status, Response};
+use ureq::Error;
 
 #[derive(Deserialize)]
 enum AuthResponse {
@@ -23,7 +23,7 @@ pub struct SuccessAuth {
 #[derive(Deserialize)]
 struct AuthError {
     error: String,
-    error_description: String,
+    _error_description: String,
 }
 
 #[derive(Debug, Clone)]

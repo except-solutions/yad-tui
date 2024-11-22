@@ -1,12 +1,14 @@
 [main]
-sync_dir_path = "/home/user/sync/dir/path"
+lang = "ru"
+sync_dir_path = "/FEEL/IT/WITH/SYNC/PATH"
+log_level = "Debug"
+cache_dir_path = ".cache/yad"
 
 [api]
 api_url = "https://api.yandex.net/v1"
 oauth_url = "https://oauth.yandex.ru"
-client_id = "47dc6152c0274ceab34dbf2e873bed50"
-client_secret = "994a5e7168dd43e7a5ed1de90a42fdbe"
+client_id = "FEEL_IT_WITH_CLIENT_ID"
+client_secret = "FEEL_IT_WITH_CLIENT_SECRET"
 
 [meta_db]
 path = ".cache/yad/meta.db"
-

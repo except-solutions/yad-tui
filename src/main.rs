@@ -23,17 +23,15 @@ use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
 #[macro_use]
 extern crate rust_i18n;
-use rust_i18n::t;
 
 i18n!("locales");
 
 fn init() -> Model {
-    let r = t!("hello");
     let args = parse_args();
 
     let config = get_toml_config(&args.conf);
     rust_i18n::set_locale(config.main.lang.as_str());
-    let (meta_db, meta) = init_db(&config);
+    let (_meta_db, meta) = init_db(&config);
     let current_dirs = fs::get_init_fs_tree(&config.main.sync_dir_path);
     let disk_client = DiskClient::from_app_conf(&config);
 
