@@ -1,10 +1,10 @@
 use jammdb::DB;
+use std::env;
 use yad_tui::{
     config::{Api, Config, DebugLevel, Main, MetaDb},
     meta_db::Meta,
     model::{File, Model, NodeType},
 };
-use std::env;
 
 #[test]
 fn test_wrong_indexes() {
