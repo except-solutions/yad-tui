@@ -1,14 +1,21 @@
 run:
 	cargo run
 
+run-strict:
+	RUSTFLAGS="-D warnings" cargo run
+
 build:
 	cargo build
+
+build-strict:
+	RUSTFLAGS="-D warnings" cargo build
 
 build-watch:
 	cargo watch -x build
 
 run-watch:
 	cargo watch -x run
+
 
 format:
 	cargo fmt --all

@@ -1,3 +1,5 @@
+use jammdb::DB;
+use std::env;
 use yad_tui::{
     config::{Api, Config, DebugLevel, Main, MetaDb},
     meta_db::Meta,
@@ -78,6 +80,7 @@ fn setup() -> Model {
             },
         },
         meta: Meta { api_token: None },
+        meta_db: DB::open(format!("{}/test.db", env::temp_dir().display())).unwrap(),
         disk_client: yad_tui::disk_client::DiskClient {
             api_url: "".to_string(),
             oauth_url: "".to_string(),

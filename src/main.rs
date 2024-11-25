@@ -23,12 +23,10 @@ use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
 #[macro_use]
 extern crate rust_i18n;
-use rust_i18n::t;
 
 i18n!("locales");
 
 fn init() -> Model {
-    let r = t!("hello");
     let args = parse_args();
 
     let config = get_toml_config(&args.conf);
@@ -81,6 +79,7 @@ fn init() -> Model {
         },
         config_path: get_real_config_path(&args.conf),
         meta,
+        meta_db,
         disk_client,
     }
 }

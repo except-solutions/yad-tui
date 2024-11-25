@@ -47,14 +47,14 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
         (
             Message::InputModeAction(InputAction::InputChar(code_number)),
             Some(LoginForm {
-                code_input,
-                error_message,
+                code_input: _,
+                error_message: _,
             }),
         ) => {
             model.popup = update_input(model.popup.clone(), code_number);
             Some(Continue)
         }
-        (Message::InputModeAction(InputAction::DeleteChar), LoginForm) => {
+        (Message::InputModeAction(InputAction::DeleteChar), _login_form) => {
             model.popup = remove_last_symbol(model.popup.clone());
             Some(Continue)
         }
@@ -62,7 +62,7 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
             Message::InputModeAction(InputAction::Send),
             Some(LoginForm {
                 code_input,
-                error_message,
+                error_message: _,
             }),
         ) => {
             send_form(model, code_input);

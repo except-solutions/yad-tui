@@ -1,9 +1,8 @@
-use base64::{alphabet::URL_SAFE, prelude::*};
+use crate::config::Config;
+use base64::prelude::*;
 use log;
 use serde::Deserialize;
-
-use crate::config::Config;
-use ureq::{Error, Error::Status, Response};
+use ureq::Error;
 
 #[derive(Deserialize)]
 enum AuthResponse {
@@ -63,7 +62,10 @@ impl DiskClient {
                 match response.into_json::<AuthError>() {
                     Ok(body) => {
                         log::info!("Auth error response body: {}", body.error);
-                        Err(body.error)
+                        Err(format!(
+                            "Error: {}\n Error description {}",
+                            body.error, body.error_description
+                        ))
                     }
                     Err(response_error) => {
                         log::error!("Unexpected response error: {}", response_error);
