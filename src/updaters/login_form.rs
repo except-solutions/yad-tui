@@ -52,6 +52,7 @@ fn update_form(
 pub fn send_form(model: &mut Model, code: String) {
     match model.disk_client.auth(code.clone()) {
         Ok(auth_response) => {
+            // FIXME
             // Try fix borrowed problem into and_then
             //
             // let result = model
