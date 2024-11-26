@@ -1,5 +1,3 @@
-use std::io::{self, stdout};
-
 use ratatui::{
     crossterm::{
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -7,12 +5,11 @@ use ratatui::{
     },
     prelude::*,
 };
+use std::io::{self, stdout};
 
 use yad_tui::config::{get_real_config_path, get_toml_config};
 use yad_tui::events::handle_events;
-use yad_tui::fs;
 use yad_tui::meta_db::init_db;
-use yad_tui::model::*;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
 use yad_tui::{cli::parse_args, disk_client::DiskClient};
@@ -21,7 +18,8 @@ use log::{debug, info};
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
-use yad_tui::structs::file::{File, NodeType};
+use yad_tui::fs::{read_dir, ReaderHOF, FS};
+use yad_tui::models::model::{Model, Popup};
 
 #[macro_use]
 extern crate rust_i18n;
@@ -30,22 +28,13 @@ i18n!("locales");
 
 fn init() -> Model {
     let args = parse_args();
-
     let config = get_toml_config(&args.conf);
+
     rust_i18n::set_locale(config.main.lang.as_str());
+
     let (meta_db, meta) = init_db(&config);
-    let current_dirs = fs::get_init_fs_tree(&config.main.sync_dir_path);
+    let fs = <FS as ReaderHOF>::from_path(&config.main.sync_dir_path, read_dir);
     let disk_client = DiskClient::from_app_conf(&config);
-
-    let previous = vec![File {
-        name: String::from("abc"),
-        file_type: NodeType::File,
-    }];
-
-    let next = vec![File {
-        name: String::from("abc"),
-        file_type: NodeType::File,
-    }];
 
     let log_file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} [{l}] - {m}{n}")))
@@ -64,9 +53,7 @@ fn init() -> Model {
     log4rs::init_config(log_config).unwrap();
 
     Model {
-        previous_dir: previous,
-        current_dirs,
-        sub_dir: next,
+        fs,
         config,
         popup: if meta.api_token.is_some() {
             None

@@ -1,21 +1,16 @@
-use crate::config::get_text_config;
-use crate::model::*;
-use crate::{model::Popup, ui_tools::login_ui::render_login_form};
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::palette::material::BLUE;
-use ratatui::style::palette::tailwind::SLATE;
-use ratatui::style::{Modifier, Style};
-use ratatui::text::Line;
-use ratatui::widgets::{
-    Block, BorderType, Borders, Clear, HighlightSpacing, List, ListItem, Paragraph,
+use crate::{
+    components::popups::login_ui::render_login_form,
+    config::get_text_config,
+    models::model::{Model, Popup},
 };
-use ratatui::{symbols, Frame};
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 
-const TODO_HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
-const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier::BOLD);
+use crate::components::main_screen::next_dir::NextDir;
+use ratatui::widgets::{Block, Clear, Paragraph};
+use ratatui::Frame;
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
-    let vertical_layouts = Layout::default()
+    let [previous_dir_area, current_dir_area, next_dir_area] = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(vec![
             Constraint::Percentage(20),
@@ -23,46 +18,19 @@ pub fn ui(model: &mut Model, frame: &mut Frame) {
             Constraint::Percentage(50),
         ])
         .split(frame.size())
-        .to_vec();
+        .to_vec()[..]
+    else {
+        panic!("Unexpected areas")
+    };
 
-    let previous_dir_block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded);
+    model.fs.previous_dir.render(previous_dir_area, frame);
+    model.fs.current_dir.render(current_dir_area, frame);
 
-    let next_dir_block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded);
-
-    let previous_dir = List::new(["wk_,root dir"]).block(previous_dir_block);
-
-    let next_dir = List::new(["z", "z"]).block(next_dir_block);
-
-    let block = Block::new()
-        .title(Line::raw("Current dir").centered())
-        .borders(Borders::TOP)
-        .border_set(symbols::border::EMPTY)
-        .border_style(TODO_HEADER_STYLE);
-
-    let current_dirs_items: Vec<ListItem> = model
-        .current_dirs
-        .items
-        .iter()
-        .map(|file| ListItem::from(file))
-        .collect();
-
-    let current_dirs_list = List::new(current_dirs_items)
-        .block(block)
-        .highlight_style(SELECTED_STYLE)
-        .highlight_symbol(">")
-        .highlight_spacing(HighlightSpacing::Always);
-
-    frame.render_widget(previous_dir, vertical_layouts[0]);
-    frame.render_stateful_widget(
-        current_dirs_list,
-        vertical_layouts[1],
-        &mut model.current_dirs.state,
-    );
-    frame.render_widget(next_dir, vertical_layouts[2]);
+    if let Some(ref mut next_dir) = model.fs.next_dir {
+        next_dir.render(next_dir_area, frame);
+    } else {
+        NextDir::render_empty(next_dir_area, frame)
+    }
 
     match &model.popup {
         Some(Popup::Config) => {

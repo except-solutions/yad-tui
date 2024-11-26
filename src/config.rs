@@ -1,4 +1,4 @@
-use crate::model::Model;
+use crate::models::model::Model;
 use log::{self, LevelFilter};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
