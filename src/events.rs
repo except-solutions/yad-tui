@@ -7,13 +7,12 @@ use ratatui::crossterm::event::KeyCode;
 use ratatui::crossterm::event::{Event, KeyEventKind};
 use std::io;
 use std::time::Duration;
+use KeyCode::*;
 
 pub fn handle_events(model: &Model) -> io::Result<Option<Message>> {
     if event::poll(Duration::from_millis(250))? {
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
-                use KeyCode::*;
-
                 let message = if model.popup.is_some() {
                     match key.code {
                         Char('q') | Esc => Some(ClosePopup),

@@ -2,9 +2,17 @@ use crate::config::get_text_config;
 use crate::model::*;
 use crate::{model::Popup, ui_tools::login_ui::render_login_form};
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::prelude::Stylize;
-use ratatui::widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph};
-use ratatui::Frame;
+use ratatui::style::palette::material::BLUE;
+use ratatui::style::palette::tailwind::SLATE;
+use ratatui::style::{Modifier, Style};
+use ratatui::text::Line;
+use ratatui::widgets::{
+    Block, BorderType, Borders, Clear, HighlightSpacing, List, ListItem, Paragraph,
+};
+use ratatui::{symbols, Frame};
+
+const TODO_HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
+const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier::BOLD);
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
     let vertical_layouts = Layout::default()
@@ -16,21 +24,44 @@ pub fn ui(model: &mut Model, frame: &mut Frame) {
         ])
         .split(frame.size())
         .to_vec();
+
     let previous_dir_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
-    let current_dir_block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded);
+
     let next_dir_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
+
     let previous_dir = List::new(["wk_,root dir"]).block(previous_dir_block);
-    let current_dir =
-        List::new(model.current_dir.iter().map(|f| to_list_item(f))).block(current_dir_block);
+
     let next_dir = List::new(["z", "z"]).block(next_dir_block);
+
+    let block = Block::new()
+        .title(Line::raw("Current dir").centered())
+        .borders(Borders::TOP)
+        .border_set(symbols::border::EMPTY)
+        .border_style(TODO_HEADER_STYLE);
+
+    let current_dirs_items: Vec<ListItem> = model
+        .current_dirs
+        .items
+        .iter()
+        .map(|file| ListItem::from(file))
+        .collect();
+
+    let current_dirs_list = List::new(current_dirs_items)
+        .block(block)
+        .highlight_style(SELECTED_STYLE)
+        .highlight_symbol(">")
+        .highlight_spacing(HighlightSpacing::Always);
+
     frame.render_widget(previous_dir, vertical_layouts[0]);
-    frame.render_widget(current_dir, vertical_layouts[1]);
+    frame.render_stateful_widget(
+        current_dirs_list,
+        vertical_layouts[1],
+        &mut model.current_dirs.state,
+    );
     frame.render_widget(next_dir, vertical_layouts[2]);
 
     match &model.popup {
@@ -68,15 +99,4 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         Constraint::Percentage((100 - percent_x) / 2),
     ])
     .split(popup_layout[1])[1]
-}
-
-fn to_list_item(file: &File) -> ListItem {
-    if file.active {
-        ListItem::new(file.name.clone()).black().bold().on_blue()
-    } else {
-        match file.file_type {
-            NodeType::Dir => ListItem::new(file.name.clone()).on_black(),
-            NodeType::File => ListItem::new(file.name.clone()).on_black().dim().blue(),
-        }
-    }
 }

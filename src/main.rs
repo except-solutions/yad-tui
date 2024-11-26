@@ -21,6 +21,8 @@ use log::{debug, info};
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
+use yad_tui::structs::file::{File, NodeType};
+
 #[macro_use]
 extern crate rust_i18n;
 
@@ -37,13 +39,11 @@ fn init() -> Model {
 
     let previous = vec![File {
         name: String::from("abc"),
-        active: true,
         file_type: NodeType::File,
     }];
 
     let next = vec![File {
         name: String::from("abc"),
-        active: true,
         file_type: NodeType::File,
     }];
 
@@ -64,9 +64,8 @@ fn init() -> Model {
     log4rs::init_config(log_config).unwrap();
 
     Model {
-        active_file_row_index: 0,
         previous_dir: previous,
-        current_dir: current_dirs,
+        current_dirs,
         sub_dir: next,
         config,
         popup: if meta.api_token.is_some() {

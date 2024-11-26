@@ -1,7 +1,6 @@
 [main]
 sync_dir_path = "/home/user/sync/dir/path"
 lang = "ru"
-sync_dir_path = "/fill/it/with/sync/path"
 log_level = "Debug"
 cache_dir_path = ".cache/yad"
 

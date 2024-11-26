@@ -23,15 +23,11 @@ pub enum Message {
 pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
     match (msg, model.popup.clone()) {
         (MoveDown, None) => {
-            update_active_file(
-                model,
-                |i, files_count| (i as usize) < files_count,
-                |i| i + 1,
-            );
+            model.current_dirs.state.select_next();
             Some(Continue)
         }
         (MoveUp, None) => {
-            update_active_file(model, |i, _| i >= 0, |i| i - 1);
+            model.current_dirs.state.select_previous();
             Some(Continue)
         }
         (ShowConfig, None) => {
@@ -70,16 +66,4 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
         }
         (_, _) => Some(Continue),
     }
-}
-
-fn update_active_file(model: &mut Model, cond: fn(i32, usize) -> bool, mutator: fn(i32) -> i32) {
-    let current_dir_size = model.current_dir.len();
-    let new_active_file_row_index_guess = mutator(model.active_file_row_index);
-
-    if cond(new_active_file_row_index_guess, current_dir_size) {
-        match model.set_active_file(new_active_file_row_index_guess) {
-            Ok(()) => (),
-            Err(m) => println!("){}", m),
-        }
-    };
 }
