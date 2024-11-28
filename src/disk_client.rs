@@ -25,6 +25,7 @@ pub struct SuccessAuth {
 #[derive(Deserialize)]
 struct AuthError {
     error: String,
+    error_description: String,
 }
 
 #[derive(Debug, Clone)]
@@ -63,7 +64,11 @@ impl DiskClient {
 
                 match response.into_json::<AuthError>() {
                     Ok(body) => {
-                        log::info!("Auth error response body: {}", body.error);
+                        log::info!(
+                            "Auth error response body: {}\n description: {}",
+                            body.error,
+                            body.error_description
+                        );
 
                         let error_codes =
                             HashMap::from([("bad_verification_code", "invalid_code")]);
