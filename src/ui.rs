@@ -76,10 +76,14 @@ pub fn ui(model: &mut Model, frame: &mut Frame) {
         }
         Some(Popup::LoginForm {
             code_input,
-            // TODO render error
-            error_message: _,
+            error_message,
         }) => {
-            render_login_form(model.config.api.auth_link(), code_input.clone(), frame);
+            render_login_form(
+                frame,
+                model.config.api.auth_link(),
+                code_input.clone(),
+                error_message.clone(),
+            );
         }
         None => (),
     };

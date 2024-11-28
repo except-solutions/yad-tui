@@ -1,5 +1,12 @@
+common:
+  error: "Ошибка"
+
 login_form:
   go_to: "Перейдите"
   please_log_in: "Пожалуйста авторизуйтесь"
   enter_code: "Введите код:"
+  errors:
+    invalid_code: "Неправильно введен код верификации, попробуйте снова"
+
+
 

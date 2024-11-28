@@ -1,5 +1,11 @@
+common:
+  error: "Error"
+
 login_form:
   go_to: "Go to"
   please_log_in: "Please log in"
   enter_code: "Enter code:"
+  errors: 
+    invalid_code: "Passed code is not valid, try again"
+
 
