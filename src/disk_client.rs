@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use crate::config::Config;
 use base64::prelude::*;
 use log;
+use rust_i18n::t;
 use serde::Deserialize;
 use ureq::Error;
 
@@ -61,11 +64,22 @@ impl DiskClient {
 
                 match response.into_json::<AuthError>() {
                     Ok(body) => {
-                        log::info!("Auth error response body: {}", body.error);
-                        Err(format!(
-                            "Error: {}\n Error description {}",
-                            body.error, body.error_description
-                        ))
+                        log::info!(
+                            "Auth error response body: {}\n description: {}",
+                            body.error,
+                            body.error_description
+                        );
+
+                        let error_codes =
+                            HashMap::from([("bad_verification_code", "invalid_code")]);
+
+                        let error_code = error_codes
+                            .get(&body.error.as_str())
+                            .copied()
+                            .unwrap_or(body.error.as_str());
+                        let verbose_error = t!(format!("login_form.errors.{error_code}"));
+
+                        Err(format!("{}: {}\n", t!("common.error"), verbose_error))
                     }
                     Err(response_error) => {
                         log::error!("Unexpected response error: {}", response_error);
