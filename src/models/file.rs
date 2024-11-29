@@ -1,18 +1,22 @@
-use crate::structs::file::{File, NodeType};
-use ratatui::prelude::Color;
+use ratatui::prelude::{Color, Line};
 use ratatui::style::palette::material::GREEN;
 use ratatui::style::palette::tailwind::SLATE;
-use ratatui::text::Line;
-use ratatui::widgets::{ListItem, ListState};
+use ratatui::widgets::ListItem;
+
+#[derive(Debug)]
+pub struct File {
+    pub name: String,
+    pub file_type: NodeType,
+}
+
+#[derive(Clone, Debug, Ord, Eq, PartialOrd, PartialEq)]
+pub enum NodeType {
+    File,
+    Dir,
+}
 
 const TEXT_FG_COLOR: Color = SLATE.c200;
 const COMPLETED_TEXT_FG_COLOR: Color = GREEN.c500;
-
-#[derive(Debug)]
-pub struct CurrentDirs {
-    pub items: Vec<File>,
-    pub state: ListState,
-}
 
 impl From<&File> for ListItem<'_> {
     fn from(value: &File) -> Self {

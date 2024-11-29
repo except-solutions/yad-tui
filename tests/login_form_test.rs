@@ -1,7 +1,5 @@
-use yad_tui::{
-    model::Popup,
-    updaters::login_form::{remove_last_symbol, update_input},
-};
+use yad_tui::models::model::Popup;
+use yad_tui::updaters::login_form::{remove_last_symbol, update_input};
 
 #[test]
 fn test_add_symbol() {

@@ -1,6 +1,6 @@
 use crate::{
     meta_db::Meta,
-    model::{Model, Popup},
+    models::model::{Model, Popup},
 };
 
 const LOGIN_INPUT_MAX_DIGITS: u8 = 7;

@@ -1,4 +1,4 @@
-use crate::model::{Model, Popup::*};
+use crate::models::model::{Model, Popup};
 use crate::update::Message::{Continue, Exit, MoveDown, MoveUp, ShowConfig};
 use crate::updaters::login_form::{remove_last_symbol, send_form, update_input};
 
@@ -23,15 +23,17 @@ pub enum Message {
 pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
     match (msg, model.popup.clone()) {
         (MoveDown, None) => {
-            model.current_dirs.state.select_next();
+            model.fs.current_dir.state.select_next();
+            model.fs.set_next_dir_from_current();
             Some(Continue)
         }
         (MoveUp, None) => {
-            model.current_dirs.state.select_previous();
+            model.fs.current_dir.state.select_previous();
+            model.fs.set_next_dir_from_current();
             Some(Continue)
         }
         (ShowConfig, None) => {
-            model.popup = Some(Config);
+            model.popup = Some(Popup::Config);
             Some(Continue)
         }
         (Continue, _) => Some(Continue),
@@ -42,7 +44,7 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
         }
         (
             Message::InputModeAction(InputAction::InputChar(code_number)),
-            Some(LoginForm {
+            Some(Popup::LoginForm {
                 code_input: _,
                 error_message: _,
             }),
@@ -56,7 +58,7 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
         }
         (
             Message::InputModeAction(InputAction::Send),
-            Some(LoginForm {
+            Some(Popup::LoginForm {
                 code_input,
                 error_message: _,
             }),

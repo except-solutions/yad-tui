@@ -1,5 +1,4 @@
-use crate::components::main_screen_current_dirs::CurrentDirs;
-use crate::structs::file::File;
+use crate::fs::FS;
 use crate::{config::Config, disk_client::DiskClient, meta_db::Meta};
 use jammdb::DB;
 use std::{fmt, path::PathBuf};
@@ -14,9 +13,7 @@ pub enum Popup {
 }
 
 pub struct Model {
-    pub previous_dir: Vec<File>,
-    pub current_dirs: CurrentDirs,
-    pub sub_dir: Vec<File>,
+    pub fs: FS,
     pub popup: Option<Popup>,
     pub config: Config,
     pub config_path: PathBuf,
@@ -28,9 +25,7 @@ pub struct Model {
 impl fmt::Debug for Model {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Model")
-            .field("previos_dir", &self.previous_dir)
-            .field("current_dir", &self.current_dirs)
-            .field("sub_dir", &self.sub_dir)
+            .field("fs", &self.fs)
             .field("popup", &self.popup)
             .field("config", &self.config)
             .field("config_path", &self.config_path)

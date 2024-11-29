@@ -1,4 +1,4 @@
-use crate::model::Model;
+use crate::models::model::Model;
 use crate::update::InputAction::*;
 use crate::update::Message;
 use crate::update::Message::*;
