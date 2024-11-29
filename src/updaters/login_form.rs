@@ -52,22 +52,32 @@ fn update_form(
 pub fn send_form(model: &mut Model, code: String) {
     match model.disk_client.auth(code.clone()) {
         Ok(auth_response) => {
-            let _ = model.meta_db.tx(true).and_then(|tx| {
-                tx.get_or_create_bucket("meta")
-                    .map(|bucket| {
-                        let meta = Meta {
-                            api_token: Some(auth_response.access_token),
-                        };
-                        let data = serde_json::to_vec(&meta).unwrap();
-                        let _ = bucket.put("meta", data);
-                        meta
+            model
+                .meta_db
+                .tx(true)
+                .and_then(|tx| {
+                    tx.get_or_create_bucket("meta")
+                        .map(|bucket| {
+                            let meta = Meta {
+                                api_token: Some(auth_response.access_token),
+                            };
+                            let data = serde_json::to_vec(&meta).unwrap();
+                            let _ = bucket.put("meta", data);
+                            meta
+                        })
+                        .map(|meta| {
+                            let _ = tx.commit();
+                            model.meta = meta;
+                            model.popup = None;
+                        })
+                })
+                .unwrap_or_else(|err| {
+                    log::error!("{}", err);
+                    model.popup = Some(Popup::LoginForm {
+                        code_input: "".to_string(),
+                        error_message: Some(format!("{} - {}", "Auth token store error", err)),
                     })
-                    .map(|meta| {
-                        let _ = tx.commit();
-                        model.meta = meta;
-                        model.popup = None;
-                    })
-            });
+                });
         }
         Err(error_message) => {
             model.popup = Some(Popup::LoginForm {
