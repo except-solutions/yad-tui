@@ -23,13 +23,11 @@ pub enum Message {
 pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
     match (msg, model.popup.clone()) {
         (MoveDown, None) => {
-            model.fs.current_dir.state.select_next();
-            model.fs.set_next_dir_from_current();
+            model.fs.select_next_element();
             Some(Continue)
         }
         (MoveUp, None) => {
-            model.fs.current_dir.state.select_previous();
-            model.fs.set_next_dir_from_current();
+            model.fs.select_previous_element();
             Some(Continue)
         }
         (ShowConfig, None) => {

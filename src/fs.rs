@@ -19,7 +19,6 @@ pub struct FS {
 impl ReaderHOF for FS {
     fn from_path(path: &String, fs_reader: fn(&PathBuf) -> Vec<File>) -> Self {
         let current_dir = CurrentDir::from_path(path, fs_reader);
-
         let previous_dir = PreviousDir::from_path(path, fs_reader);
         let next_dir = None;
 
@@ -42,7 +41,17 @@ impl FS {
         }
     }
 
-    pub fn set_next_dir_from_current(&mut self) {
+    pub fn select_next_element(&mut self) {
+        self.current_dir.state.select_next();
+        self.set_next_dir_from_current();
+    }
+
+    pub fn select_previous_element(&mut self) {
+        self.current_dir.state.select_previous();
+        self.set_next_dir_from_current();
+    }
+
+    fn set_next_dir_from_current(&mut self) {
         let selected = self
             .current_dir
             .items

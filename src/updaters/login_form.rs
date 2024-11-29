@@ -52,35 +52,22 @@ fn update_form(
 pub fn send_form(model: &mut Model, code: String) {
     match model.disk_client.auth(code.clone()) {
         Ok(auth_response) => {
-            // FIXME
-            // Try fix borrowed problem into and_then
-            //
-            // let result = model
-            //     .meta_db
-            //     .clone()
-            //     .tx(true)
-            //     .and_then(|ta| {
-            //         ta.get_or_create_bucket("meta").and_then(|bucket| {
-            //             let meta = Meta {
-            //                 api_token: Some(auth_response.access_token),
-            //             };
-
-            //             let bytes = serde_json::to_vec(&meta).unwrap();
-            //             bucket.put("meta", bytes)
-            //         })
-            //
-            //     });
-            let tx = model.meta_db.tx(true).unwrap();
-            let bucket = tx.get_or_create_bucket("meta").unwrap();
-            let meta = Meta {
-                api_token: Some(auth_response.access_token),
-            };
-            let bytes = serde_json::to_vec(&meta).unwrap();
-            let _ = bucket.put("meta", bytes);
-            tx.commit().unwrap();
-
-            model.meta = meta;
-            model.popup = None;
+            let _ = model.meta_db.tx(true).and_then(|tx| {
+                tx.get_or_create_bucket("meta")
+                    .map(|bucket| {
+                        let meta = Meta {
+                            api_token: Some(auth_response.access_token),
+                        };
+                        let data = serde_json::to_vec(&meta).unwrap();
+                        let _ = bucket.put("meta", data);
+                        meta
+                    })
+                    .map(|meta| {
+                        let _ = tx.commit();
+                        model.meta = meta;
+                        model.popup = None;
+                    })
+            });
         }
         Err(error_message) => {
             model.popup = Some(Popup::LoginForm {
