@@ -27,6 +27,7 @@ pub fn handle_events(model: &Model) -> io::Result<Option<Message>> {
                         Char('j') | Down => Some(MoveDown),
                         Char('k') | Up => Some(MoveUp),
                         Char('c') => Some(ShowConfig),
+                        Char('l') | Enter => Some(EnterDir),
                         _ => Some(Continue),
                     }
                 };

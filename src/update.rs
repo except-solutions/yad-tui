@@ -17,6 +17,7 @@ pub enum Message {
     MoveUp,
     ShowConfig,
     ClosePopup,
+    EnterDir,
     InputModeAction(InputAction),
 }
 
@@ -32,6 +33,10 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
         }
         (ShowConfig, None) => {
             model.popup = Some(Popup::Config);
+            Some(Continue)
+        }
+        (Message::EnterDir, None) => {
+            model.fs.open_current();
             Some(Continue)
         }
         (Continue, _) => Some(Continue),
