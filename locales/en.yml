@@ -6,6 +6,11 @@ login_form:
   please_log_in: "Please log in"
   enter_code: "Enter code:"
   errors: 
-    invalid_code: "Passed code is not valid, try again"
+    invalid_code: "Authorization"
 
+disk:
+  errors:
+    unauthorized: "Authorization error, please log in againg"
+    unknown: "Unknown server error"
+    disk_space: "Cloud space is left, opperation is impossible"
 
