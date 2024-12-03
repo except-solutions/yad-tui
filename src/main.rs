@@ -34,7 +34,7 @@ fn init() -> Model {
 
     let (meta_db, meta) = init_db(&config);
     let fs = <FS as ReaderHOF>::from_path(&config.main.sync_dir_path, read_dir);
-    let disk_client = DiskClient::from_app_conf(&config);
+    let disk_client = DiskClient::from_app_conf(&config, &meta);
 
     let log_file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} [{l}] - {m}{n}")))

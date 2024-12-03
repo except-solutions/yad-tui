@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
-use crate::config::Config;
+use crate::{config::Config, meta_db::Meta};
 use base64::prelude::*;
 use log;
 use rust_i18n::t;
-use serde::Deserialize;
-use ureq::Error;
+use serde::{de::DeserializeOwned, Deserialize};
+use ureq::Error as HTTPError;
 
 #[derive(Deserialize)]
 enum AuthResponse {
@@ -28,6 +28,60 @@ struct AuthError {
     error_description: String,
 }
 
+// TODO delete after implementation
+#[allow(dead_code)]
+#[derive(Deserialize)]
+struct User {
+    display_name: String,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+pub struct DiskMeta {
+    used_space: u64,
+    total_space: u64,
+    user: User,
+}
+
+#[derive(Debug)]
+pub enum DiskError {
+    UnknownServer(String),
+    Unauthorized(String),
+    DiskSpaceLimitOverhead(String),
+    InvalidResponseBody(String),
+    EmptyToken,
+}
+
+impl DiskError {
+    pub fn unknown_default() -> Self {
+        Self::UnknownServer("disk.errors.unknown".to_string())
+    }
+
+    pub fn unauthorized_default() -> Self {
+        Self::Unauthorized(t!("disk.errors.unauthorized").to_string())
+    }
+
+    pub fn disk_space_default() -> Self {
+        Self::DiskSpaceLimitOverhead(t!("disk.errors.disk_space").to_string())
+    }
+
+    pub fn invalid_response_body_default() -> Self {
+        Self::InvalidResponseBody(t!("disk.errors.invalid_body").to_string())
+    }
+}
+
+impl fmt::Display for DiskError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DiskError::UnknownServer(msg) => write!(f, "{}", msg),
+            DiskError::Unauthorized(msg) => write!(f, "{}", msg),
+            DiskError::DiskSpaceLimitOverhead(msg) => write!(f, "{}", msg),
+            DiskError::InvalidResponseBody(msg) => write!(f, "{}", msg),
+            _ => write!(f, "Unknwon disk error"),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DiskClient {
     pub api_url: String,
@@ -38,13 +92,13 @@ pub struct DiskClient {
 }
 
 impl DiskClient {
-    pub fn from_app_conf(conf: &Config) -> Self {
+    pub fn from_app_conf(conf: &Config, meta: &Meta) -> Self {
         DiskClient {
             api_url: conf.api.api_url.clone(),
             oauth_url: conf.api.oauth_url.clone(),
             client_id: conf.api.client_id.clone(),
             client_secret: conf.api.client_secret.clone(),
-            token: None,
+            token: meta.api_token.clone(),
         }
     }
 
@@ -59,7 +113,7 @@ impl DiskClient {
 
         match response {
             Ok(response) => Ok(response.unwrap()),
-            Err(Error::Status(code, response)) => {
+            Err(HTTPError::Status(code, response)) => {
                 log::info!("Auth error response with code {}", code);
 
                 match response.into_json::<AuthError>() {
@@ -90,6 +144,47 @@ impl DiskClient {
             Err(other_error) => {
                 log::error!("{}", other_error);
                 Err("Unknown error".to_string())
+            }
+        }
+    }
+
+    pub fn disk_meta(&self) -> Result<DiskMeta, DiskError> {
+        let url = format!(
+            "{url}{disk_meta_path}",
+            url = self.api_url.clone(),
+            disk_meta_path = "/v1/disk"
+        );
+
+        let token = self.token.clone().ok_or(DiskError::EmptyToken)?;
+
+        let response = ureq::get(&url)
+            .set("Authorization", &format!("OAuth {token}", token = token))
+            .call();
+
+        self.match_response::<DiskMeta>(response)
+    }
+
+    fn match_response<T: DeserializeOwned>(
+        &self,
+        response: Result<ureq::Response, HTTPError>,
+    ) -> Result<T, DiskError> {
+        match response {
+            Ok(response_body) => Ok(response_body.into_json::<T>().unwrap()),
+            Err(HTTPError::Status(401, response_err)) => {
+                log::error!("Unauthorized response exception: {:?}", response_err);
+                Err(DiskError::unauthorized_default())
+            }
+            Err(HTTPError::Status(403, response_err)) => {
+                log::error!("Space overhead error: {:?}", response_err);
+                Err(DiskError::unauthorized_default())
+            }
+            Err(HTTPError::Status(code, response_err)) => {
+                log::error!("Unknown API error, code: {} {:?}", code, response_err);
+                Err(DiskError::unauthorized_default())
+            }
+            Err(response_error) => {
+                log::error!("Unexpected response error: {}", response_error);
+                Err(DiskError::unknown_default())
             }
         }
     }
