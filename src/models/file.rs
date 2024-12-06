@@ -2,17 +2,28 @@ use ratatui::prelude::{Color, Line};
 use ratatui::style::palette::material::GREEN;
 use ratatui::style::palette::tailwind::SLATE;
 use ratatui::widgets::ListItem;
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct File {
     pub name: String,
     pub file_type: NodeType,
+    pub path: PathBuf,
 }
 
 #[derive(Clone, Debug, Ord, Eq, PartialOrd, PartialEq)]
 pub enum NodeType {
     File,
     Dir,
+}
+
+impl File {
+    pub fn is_dir(&self) -> bool {
+        self.file_type == NodeType::Dir
+    }
+    pub fn is_file(&self) -> bool {
+        self.file_type == NodeType::File
+    }
 }
 
 const TEXT_FG_COLOR: Color = SLATE.c200;

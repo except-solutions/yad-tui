@@ -51,6 +51,15 @@ impl FS {
         self.set_next_dir_from_current();
     }
 
+    pub fn open_current(&mut self) {
+        if let Some(selected) = self.get_selected_file() {
+            if selected.is_dir() {
+                let path = String::from(selected.path.to_str().unwrap());
+                self.current_dir = CurrentDir::from_path(&path, self.reader_func)
+            }
+        }
+    }
+
     fn set_next_dir_from_current(&mut self) {
         let selected = self
             .current_dir
@@ -69,6 +78,12 @@ impl FS {
             }
         }
     }
+
+    fn get_selected_file(&mut self) -> Option<&File> {
+        self.current_dir
+            .items
+            .get(self.current_dir.state.selected()?)
+    }
 }
 
 pub fn read_dir(path: &PathBuf) -> Vec<File> {
@@ -84,6 +99,7 @@ pub fn read_dir(path: &PathBuf) -> Vec<File> {
                             } else {
                                 NodeType::Dir
                             },
+                            path: dir_entry.path(),
                         }),
                         Err(err) => Err(format!("Unexpected file type. Original exc: {err}")),
                     },
