@@ -34,3 +34,9 @@ impl fmt::Debug for Model {
             .finish()
     }
 }
+
+impl Model {
+    pub fn is_authenticated(&self) -> bool {
+        self.meta.api_token.is_some()
+    }
+}

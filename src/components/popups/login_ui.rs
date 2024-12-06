@@ -19,14 +19,14 @@ pub fn render_login_form(
     let area = centered_rect(50, 60, frame.size());
     let [link_area, _space_1, input_area, _space_2, error_area] = Layout::vertical([
         Constraint::Length(4),
-        Constraint::Length(10),
-        Constraint::Length(4),
+        Constraint::Length(8),
+        Constraint::Length(3),
         Constraint::Length(2),
         Constraint::Length(4),
     ])
     .areas(area);
 
-    let [input_h] = Layout::horizontal([Constraint::Length(15)])
+    let [input_h] = Layout::horizontal([Constraint::Length(40)])
         .flex(Flex::Center)
         .areas(input_area);
 

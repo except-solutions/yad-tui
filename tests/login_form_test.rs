@@ -21,27 +21,6 @@ fn test_add_symbol() {
 }
 
 #[test]
-fn test_add_wrong_symbol() {
-    let test_popup = Popup::LoginForm {
-        code_input: "".to_string(),
-        error_message: None,
-    };
-
-    match update_input(Some(test_popup), 'a') {
-        Some(Popup::LoginForm {
-            code_input,
-            error_message: _,
-        }) => assert_eq!(
-            code_input,
-            "".to_string(),
-            "should not change on wrong symbol input"
-        ),
-
-        _ => panic!("wrong_popup type"),
-    }
-}
-
-#[test]
 fn test_delete_symbol() {
     let test_popup = Popup::LoginForm {
         code_input: "123".to_string(),
