@@ -10,26 +10,28 @@ use ratatui::widgets::{Block, Clear, Paragraph};
 use ratatui::Frame;
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
-    let [previous_dir_area, current_dir_area, next_dir_area] = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(vec![
-            Constraint::Percentage(20),
-            Constraint::Percentage(50),
-            Constraint::Percentage(50),
-        ])
-        .split(frame.size())
-        .to_vec()[..]
-    else {
-        panic!("Unexpected areas")
-    };
+    if model.is_authenticated() {
+        let [previous_dir_area, current_dir_area, next_dir_area] = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Percentage(20),
+                Constraint::Percentage(50),
+                Constraint::Percentage(50),
+            ])
+            .split(frame.size())
+            .to_vec()[..]
+        else {
+            panic!("Unexpected areas")
+        };
 
-    model.fs.previous_dir.render(previous_dir_area, frame);
-    model.fs.current_dir.render(current_dir_area, frame);
+        model.fs.previous_dir.render(previous_dir_area, frame);
+        model.fs.current_dir.render(current_dir_area, frame);
 
-    if let Some(ref mut next_dir) = model.fs.next_dir {
-        next_dir.render(next_dir_area, frame);
-    } else {
-        NextDir::render_empty(next_dir_area, frame)
+        if let Some(ref mut next_dir) = model.fs.next_dir {
+            next_dir.render(next_dir_area, frame);
+        } else {
+            NextDir::render_empty(next_dir_area, frame)
+        }
     }
 
     match &model.popup {

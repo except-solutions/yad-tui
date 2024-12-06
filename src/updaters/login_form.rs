@@ -3,12 +3,12 @@ use crate::{
     models::model::{Model, Popup},
 };
 
-const LOGIN_INPUT_MAX_DIGITS: u8 = 7;
+const LOGIN_INPUT_MAX_DIGITS: u16 = 999;
 
 pub fn update_input(popup: Option<Popup>, code_number: char) -> Option<Popup> {
     update_form(
         popup,
-        |input| code_number.is_ascii_digit() && input.len() < LOGIN_INPUT_MAX_DIGITS as usize,
+        |input| input.len() < LOGIN_INPUT_MAX_DIGITS as usize,
         |input| format!("{0}{1}", input, code_number),
     )
 }
