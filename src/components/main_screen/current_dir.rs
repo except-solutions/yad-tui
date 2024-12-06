@@ -33,7 +33,7 @@ impl CurrentDir {
         Self {
             path,
             items,
-            state: ListState::default(),
+            state: ListState::default().with_selected(Some(0)),
         }
     }
 

@@ -41,23 +41,36 @@ impl FS {
         }
     }
 
-    pub fn select_next_element(&mut self) {
+    pub fn select_next_element_for_next_dir(&mut self) {
         self.current_dir.state.select_next();
         self.set_next_dir_from_current();
     }
 
-    pub fn select_previous_element(&mut self) {
+    pub fn select_previous_element_for_next_dir(&mut self) {
         self.current_dir.state.select_previous();
         self.set_next_dir_from_current();
     }
 
-    pub fn open_current(&mut self) {
-        if let Some(selected) = self.get_selected_file() {
+    pub fn open_selected(&mut self) {
+        let selected = self
+            .current_dir
+            .items
+            .get(self.current_dir.state.selected().unwrap());
+
+        if let Some(selected) = selected {
             if selected.is_dir() {
                 let path = String::from(selected.path.to_str().unwrap());
+
+                self.previous_dir = PreviousDir::from_path(&path, self.reader_func);
                 self.current_dir = CurrentDir::from_path(&path, self.reader_func)
             }
         }
+    }
+
+    pub fn open_previous(&mut self) {
+        let path = String::from(self.previous_dir.path.to_str().unwrap());
+        self.current_dir = CurrentDir::from_path(&path, self.reader_func);
+        self.previous_dir = PreviousDir::from_path(&path, self.reader_func)
     }
 
     fn set_next_dir_from_current(&mut self) {
@@ -77,12 +90,6 @@ impl FS {
                 }
             }
         }
-    }
-
-    fn get_selected_file(&mut self) -> Option<&File> {
-        self.current_dir
-            .items
-            .get(self.current_dir.state.selected()?)
     }
 }
 
