@@ -67,7 +67,6 @@ pub fn send_form(model: &mut Model, code: String) {
                         })
                         .map(|meta| {
                             let _ = tx.commit();
-                            model.meta = meta;
                             model.popup = None;
                         })
                 })

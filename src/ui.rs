@@ -1,5 +1,5 @@
 use crate::{
-    components::popups::login_ui::render_login_form,
+    components::{common::Widget, popups::login_ui::render_login_form},
     config::get_text_config,
     models::model::{Model, Popup},
 };
@@ -11,19 +11,22 @@ use ratatui::Frame;
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
     if model.is_authenticated() {
-        let [previous_dir_area, current_dir_area, next_dir_area] = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![
+
+        let [top_bar, dirs] = Layout::vertical([
+            Constraint::Percentage(5),
+            Constraint::Percentage(95)
+        ]).split(frame.size()).to_vec()[..] else {
+            panic!("Unexpected areas count!");
+        };
+
+        let [previous_dir_area, current_dir_area, next_dir_area] = Layout::horizontal([
                 Constraint::Percentage(20),
                 Constraint::Percentage(50),
                 Constraint::Percentage(50),
             ])
-            .split(frame.size())
-            .to_vec()[..]
-        else {
-            panic!("Unexpected areas")
-        };
-
+            .areas(dirs);
+        
+        model.top_bar.render(frame, top_bar);
         model.fs.previous_dir.render(previous_dir_area, frame);
         model.fs.current_dir.render(current_dir_area, frame);
 

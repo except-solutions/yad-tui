@@ -37,7 +37,7 @@ impl CurrentDir {
         }
     }
 
-    pub fn render(&mut self, area: Rect, frame: &mut Frame) -> () {
+    pub fn render(&mut self, area: Rect, frame: &mut Frame) {
         let header: Block = Block::new()
             .title(Line::raw(self.path.to_string_lossy()).centered())
             .borders(Borders::TOP)

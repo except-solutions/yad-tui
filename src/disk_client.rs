@@ -28,26 +28,24 @@ struct AuthError {
     error_description: String,
 }
 
-// TODO delete after implementation
-#[allow(dead_code)]
 #[derive(Deserialize)]
-struct User {
-    display_name: String,
+pub struct User {
+    pub display_name: String,
 }
 
 #[allow(dead_code)]
 #[derive(Deserialize)]
-pub struct DiskMeta {
-    used_space: u64,
-    total_space: u64,
-    user: User,
+pub struct DiskMetaResponse {
+    pub used_space: u64,
+    pub total_space: u64,
+    pub user: User,
 }
 
 #[derive(Debug)]
 pub enum DiskError {
     UnknownServer(String),
     Unauthorized(String),
-    DiskSpaceLimitOverhead(String),
+    Forbidden(String),
     InvalidResponseBody(String),
     EmptyToken,
 }
@@ -60,11 +58,11 @@ impl DiskError {
     pub fn unauthorized_default() -> Self {
         Self::Unauthorized(t!("disk.errors.unauthorized").to_string())
     }
-
-    pub fn disk_space_default() -> Self {
-        Self::DiskSpaceLimitOverhead(t!("disk.errors.disk_space").to_string())
+    
+    pub fn forbidden_default() -> Self {
+        Self::Forbidden("forbidden".to_string())
     }
-
+    
     pub fn invalid_response_body_default() -> Self {
         Self::InvalidResponseBody(t!("disk.errors.invalid_body").to_string())
     }
@@ -75,7 +73,7 @@ impl fmt::Display for DiskError {
         match self {
             DiskError::UnknownServer(msg) => write!(f, "{}", msg),
             DiskError::Unauthorized(msg) => write!(f, "{}", msg),
-            DiskError::DiskSpaceLimitOverhead(msg) => write!(f, "{}", msg),
+            DiskError::Forbidden(msg) => write!(f, "{}", msg),
             DiskError::InvalidResponseBody(msg) => write!(f, "{}", msg),
             _ => write!(f, "Unknwon disk error"),
         }
@@ -148,20 +146,15 @@ impl DiskClient {
         }
     }
 
-    pub fn disk_meta(&self) -> Result<DiskMeta, DiskError> {
-        let url = format!(
-            "{url}{disk_meta_path}",
-            url = self.api_url.clone(),
-            disk_meta_path = "/v1/disk"
-        );
-
+    pub fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
+        
         let token = self.token.clone().ok_or(DiskError::EmptyToken)?;
 
-        let response = ureq::get(&url)
+        let response = ureq::get(&self.api_url)
             .set("Authorization", &format!("OAuth {token}", token = token))
             .call();
 
-        self.match_response::<DiskMeta>(response)
+        self.match_response::<DiskMetaResponse>(response)
     }
 
     fn match_response<T: DeserializeOwned>(
@@ -175,17 +168,18 @@ impl DiskClient {
                 Err(DiskError::unauthorized_default())
             }
             Err(HTTPError::Status(403, response_err)) => {
-                log::error!("Space overhead error: {:?}", response_err);
-                Err(DiskError::unauthorized_default())
+                log::error!("Forbidden error: {:?}", response_err.into_string());
+                Err(DiskError::forbidden_default())
             }
             Err(HTTPError::Status(code, response_err)) => {
                 log::error!("Unknown API error, code: {} {:?}", code, response_err);
-                Err(DiskError::unauthorized_default())
+                Err(DiskError::unknown_default())
             }
             Err(response_error) => {
-                log::error!("Unexpected response error: {}", response_error);
+                log::error!("Unexpected response error: {:?}", response_error);
                 Err(DiskError::unknown_default())
             }
         }
     }
 }
+
