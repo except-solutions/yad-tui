@@ -164,7 +164,7 @@ impl DiskClient {
         match response {
             Ok(response_body) => Ok(response_body.into_json::<T>().unwrap()),
             Err(HTTPError::Status(401, response_err)) => {
-                log::error!("Unauthorized response exception: {:?}", response_err);
+                log::error!("Unauthorized response exception: {:?}", response_err.into_string());
                 Err(DiskError::unauthorized_default())
             }
             Err(HTTPError::Status(403, response_err)) => {
@@ -172,7 +172,7 @@ impl DiskClient {
                 Err(DiskError::forbidden_default())
             }
             Err(HTTPError::Status(code, response_err)) => {
-                log::error!("Unknown API error, code: {} {:?}", code, response_err);
+                log::error!("Unknown API error, code: {} {:?}", code, response_err.into_string());
                 Err(DiskError::unknown_default())
             }
             Err(response_error) => {
