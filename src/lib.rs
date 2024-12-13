@@ -9,6 +9,7 @@ pub mod models;
 pub mod ui;
 pub mod update;
 pub mod updaters;
+pub mod utils;
 
 #[macro_use]
 extern crate rust_i18n;

@@ -7,7 +7,7 @@ use ratatui::{
 };
 use std::io::{self, stdout};
 
-use yad_tui::{components::main_screen::top_bar::TopBar, config::{get_real_config_path, get_toml_config}, models::disk::DiskMeta};
+use yad_tui::{components::main_screen::top_bar::TopBar, config::{get_real_config_path, get_toml_config}, models::disk_meta::DiskMeta};
 use yad_tui::events::handle_events;
 use yad_tui::meta_db::init_db;
 use yad_tui::ui::ui;

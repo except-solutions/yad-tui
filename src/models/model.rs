@@ -4,7 +4,7 @@ use crate::{config::Config, disk_client::DiskClient, meta_db::Meta};
 use jammdb::DB;
 use std::{fmt, path::PathBuf};
 
-use super::disk::DiskMeta;
+use super::disk_meta::DiskMeta;
 
 #[derive(Debug, Clone)]
 pub enum Popup {
