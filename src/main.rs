@@ -7,12 +7,16 @@ use ratatui::{
 };
 use std::io::{self, stdout};
 
-use yad_tui::{components::main_screen::top_bar::TopBar, config::{get_real_config_path, get_toml_config}, models::disk_meta::DiskMeta};
 use yad_tui::events::handle_events;
 use yad_tui::meta_db::init_db;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
 use yad_tui::{cli::parse_args, disk_client::DiskClient};
+use yad_tui::{
+    components::main_screen::top_bar::TopBar,
+    config::{get_real_config_path, get_toml_config},
+    models::disk_meta::DiskMeta,
+};
 
 use log::{debug, info};
 use log4rs::append::file::FileAppender;
@@ -36,8 +40,6 @@ fn init() -> Model {
     let fs = <FS as ReaderHOF>::from_path(&config.main.sync_dir_path, read_dir);
     let disk_client = DiskClient::from_app_conf(&config, &meta);
 
-   
-
     let log_file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} [{l}] - {m}{n}")))
         .build(format!("{}log/app.log", config.main.cache_dir_path))
@@ -54,13 +56,10 @@ fn init() -> Model {
 
     log4rs::init_config(log_config).unwrap();
 
-
     let top_bar = meta.api_token.clone().map(|_| {
         let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());
         TopBar { disk_meta }
-
     });
-    
 
     Model {
         top_bar,
@@ -69,16 +68,14 @@ fn init() -> Model {
         popup: if meta.api_token.is_some() {
             None
         } else {
-            Some(
-                Popup::LoginForm {
-                    code_input: "".to_string(),
-                    error_message: None,
-                }
-            )
+            Some(Popup::LoginForm {
+                code_input: "".to_string(),
+                error_message: None,
+            })
         },
         config_path: get_real_config_path(&args.conf),
         meta_db,
-        disk_client
+        disk_client,
     }
 }
 

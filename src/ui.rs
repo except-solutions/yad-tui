@@ -11,25 +11,25 @@ use ratatui::Frame;
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
     if model.is_authenticated() {
-
-        let [top_bar, dirs] = Layout::vertical([
-            Constraint::Percentage(5),
-            Constraint::Percentage(95)
-        ]).split(frame.size()).to_vec()[..] else {
+        let [top_bar, dirs] =
+            Layout::vertical([Constraint::Percentage(5), Constraint::Percentage(95)])
+                .split(frame.size())
+                .to_vec()[..]
+        else {
             panic!("Unexpected areas count!");
         };
 
         let [previous_dir_area, current_dir_area, next_dir_area] = Layout::horizontal([
-                Constraint::Percentage(20),
-                Constraint::Percentage(50),
-                Constraint::Percentage(50),
-            ])
-            .areas(dirs);
+            Constraint::Percentage(20),
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
+        ])
+        .areas(dirs);
 
         if let Some(top_bar_widget) = &model.top_bar {
             top_bar_widget.render(frame, top_bar);
         };
-        
+
         model.fs.previous_dir.render(previous_dir_area, frame);
         model.fs.current_dir.render(current_dir_area, frame);
 
