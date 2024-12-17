@@ -17,26 +17,31 @@ pub enum Message {
     MoveUp,
     ShowConfig,
     ClosePopup,
-    EnterDir,
+    EnterSelectedDir,
+    EnterPrevDir,
     InputModeAction(InputAction),
 }
 
 pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
     match (msg, model.popup.clone()) {
         (MoveDown, None) => {
-            model.fs.select_next_element();
+            model.fs.select_next_element_for_next_dir();
             Some(Continue)
         }
         (MoveUp, None) => {
-            model.fs.select_previous_element();
+            model.fs.select_previous_element_for_next_dir();
             Some(Continue)
         }
         (ShowConfig, None) => {
             model.popup = Some(Popup::Config);
             Some(Continue)
         }
-        (Message::EnterDir, None) => {
-            model.fs.open_current();
+        (Message::EnterSelectedDir, None) => {
+            model.fs.open_selected();
+            Some(Continue)
+        }
+        (Message::EnterPrevDir, None) => {
+            model.fs.open_previous();
             Some(Continue)
         }
         (Continue, _) => Some(Continue),
