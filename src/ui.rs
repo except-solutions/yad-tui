@@ -3,7 +3,7 @@ use crate::{
     config::get_text_config,
     models::model::{Model, Popup},
 };
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::layout::{Constraint, Layout, Rect};
 
 use crate::components::main_screen::next_dir::NextDir;
 use ratatui::widgets::{Block, Clear, Paragraph};
@@ -25,8 +25,11 @@ pub fn ui(model: &mut Model, frame: &mut Frame) {
                 Constraint::Percentage(50),
             ])
             .areas(dirs);
+
+        if let Some(top_bar_widget) = &model.top_bar {
+            top_bar_widget.render(frame, top_bar);
+        };
         
-        model.top_bar.render(frame, top_bar);
         model.fs.previous_dir.render(previous_dir_area, frame);
         model.fs.current_dir.render(current_dir_area, frame);
 

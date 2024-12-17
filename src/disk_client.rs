@@ -52,7 +52,7 @@ pub enum DiskError {
 
 impl DiskError {
     pub fn unknown_default() -> Self {
-        Self::UnknownServer("disk.errors.unknown".to_string())
+        Self::UnknownServer(t!("disk.errors.unknown").to_string())
     }
 
     pub fn unauthorized_default() -> Self {
@@ -60,7 +60,7 @@ impl DiskError {
     }
     
     pub fn forbidden_default() -> Self {
-        Self::Forbidden("forbidden".to_string())
+        Self::Forbidden(t!("disk.errors.forbidden").to_string())
     }
     
     pub fn invalid_response_body_default() -> Self {

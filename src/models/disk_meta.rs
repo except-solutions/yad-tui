@@ -6,8 +6,9 @@ impl From<DiskMetaResponse> for DiskMeta {
             used_space: disk_meta_response.used_space,
             total_space: disk_meta_response.total_space,
             username: disk_meta_response.user.display_name
+        }
     }
-}}
+}
 
 impl DiskMeta {
     const DISK_SPACE_SYMBOLS_COUNT: u8 = 5;

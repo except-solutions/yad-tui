@@ -16,7 +16,7 @@ pub fn render_login_form(
     code_input: String,
     error_message: Option<String>,
 ) {
-    let area = centered_rect(50, 60, frame.size());
+    let area = centered_rect(70, 60, frame.size());
     let [link_area, _space_1, input_area, _space_2, error_area] = Layout::vertical([
         Constraint::Length(4),
         Constraint::Length(8),

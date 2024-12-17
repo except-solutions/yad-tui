@@ -53,9 +53,14 @@ fn init() -> Model {
         .unwrap();
 
     log4rs::init_config(log_config).unwrap();
+
+
+    let top_bar = meta.api_token.clone().map(|_| {
+        let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());
+        TopBar { disk_meta }
+
+    });
     
-    let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());
-    let top_bar = TopBar { disk_meta };
 
     Model {
         top_bar,
@@ -64,10 +69,12 @@ fn init() -> Model {
         popup: if meta.api_token.is_some() {
             None
         } else {
-            Some(Popup::LoginForm {
-                code_input: "".to_string(),
-                error_message: None,
-            })
+            Some(
+                Popup::LoginForm {
+                    code_input: "".to_string(),
+                    error_message: None,
+                }
+            )
         },
         config_path: get_real_config_path(&args.conf),
         meta_db,

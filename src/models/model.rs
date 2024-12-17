@@ -1,10 +1,8 @@
 use crate::components::main_screen::top_bar::TopBar;
 use crate::fs::FS;
-use crate::{config::Config, disk_client::DiskClient, meta_db::Meta};
+use crate::{config::Config, disk_client::DiskClient};
 use jammdb::DB;
 use std::{fmt, path::PathBuf};
-
-use super::disk_meta::DiskMeta;
 
 #[derive(Debug, Clone)]
 pub enum Popup {
@@ -16,7 +14,7 @@ pub enum Popup {
 }
 
 pub struct Model {
-    pub top_bar: TopBar,
+    pub top_bar: Option<TopBar>,
     pub fs: FS,
     pub popup: Option<Popup>,
     pub config: Config,
