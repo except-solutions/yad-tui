@@ -14,13 +14,13 @@ pub struct TopBar {
 impl Widget for TopBar {
     fn render(&self, frame: &mut Frame, area: Rect) {
         let [user_a, total_space_a, used_space_a] = Layout::horizontal([
-            Constraint::Length(20),
+            Constraint::Length(25),
             Constraint::Length(25),
             Constraint::Length(25),
         ])
         .areas(area);
 
-        let user_p = Paragraph::new(format!("Hello, {}", &self.disk_meta.username));
+        let user_p = Paragraph::new(format!("{}: {}", t!("top_bar.user"), &self.disk_meta.username));
         let total_space_p = Paragraph::new(format!(
             "Total space {}",
             &self.disk_meta.total_space_verbose()
