@@ -17,3 +17,6 @@ disk:
 
 top_bar:
   user: User
+  total_space: Total space
+  used_space: Used space
+

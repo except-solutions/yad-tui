@@ -3,6 +3,7 @@ use ratatui::{
     widgets::Paragraph,
     Frame,
 };
+use rust_i18n::t;
 
 use crate::{components::common::Widget, models::disk_meta::DiskMeta};
 
@@ -15,8 +16,8 @@ impl Widget for TopBar {
     fn render(&self, frame: &mut Frame, area: Rect) {
         let [user_a, total_space_a, used_space_a] = Layout::horizontal([
             Constraint::Length(25),
-            Constraint::Length(25),
-            Constraint::Length(25),
+            Constraint::Length(30),
+            Constraint::Length(35),
         ])
         .areas(area);
 
@@ -26,11 +27,13 @@ impl Widget for TopBar {
             &self.disk_meta.username
         ));
         let total_space_p = Paragraph::new(format!(
-            "Total space {}",
+            "{}: {}",
+            t!("top_bar.total_space"),
             &self.disk_meta.total_space_verbose()
         ));
         let used_space_p = Paragraph::new(format!(
-            "Used space {}",
+            "{}: {}",
+            t!("top_bar.used_space"),
             &self.disk_meta.used_space_verbose()
         ));
 

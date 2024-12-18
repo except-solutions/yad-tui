@@ -17,3 +17,5 @@ disk:
 
 top_bar:
   user: Пользователь
+  total_space: Всего места
+  used_space:  Использовано места
