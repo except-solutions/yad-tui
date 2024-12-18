@@ -20,7 +20,11 @@ impl Widget for TopBar {
         ])
         .areas(area);
 
-        let user_p = Paragraph::new(format!("{}: {}", t!("top_bar.user"), &self.disk_meta.username));
+        let user_p = Paragraph::new(format!(
+            "{}: {}",
+            t!("top_bar.user"),
+            &self.disk_meta.username
+        ));
         let total_space_p = Paragraph::new(format!(
             "Total space {}",
             &self.disk_meta.total_space_verbose()
