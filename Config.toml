@@ -5,10 +5,10 @@ log_level = "Debug"
 cache_dir_path = ".cache/yad"
 
 [api]
-api_url = "https://api.yandex.net/v1"
+api_url = "https://cloud-api.yandex.net/v1/disk"
 oauth_url = "https://oauth.yandex.ru"
-client_id = "47dc6152c0274ceab34dbf2e873bed50"
-client_secret = "994a5e7168dd43e7a5ed1de90a42fdbe"
+client_id = "64311fe1535d42f09d05cac9979d7be9"
+client_secret = "7875f96f452e417d8e532a63e65e1c19"
 
 [meta_db]
 path = ".cache/yad/meta.db"
