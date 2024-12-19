@@ -65,9 +65,8 @@ pub fn send_form(model: &mut Model, code: String) {
                             let _ = bucket.put("meta", data);
                             meta
                         })
-                        .map(|meta| {
+                        .map(|_| {
                             let _ = tx.commit();
-                            model.meta = meta;
                             model.popup = None;
                         })
                 })

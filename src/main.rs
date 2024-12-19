@@ -7,12 +7,16 @@ use ratatui::{
 };
 use std::io::{self, stdout};
 
-use yad_tui::config::{get_real_config_path, get_toml_config};
 use yad_tui::events::handle_events;
 use yad_tui::meta_db::init_db;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
 use yad_tui::{cli::parse_args, disk_client::DiskClient};
+use yad_tui::{
+    components::main_screen::top_bar::TopBar,
+    config::{get_real_config_path, get_toml_config},
+    models::disk_meta::DiskMeta,
+};
 
 use log::{debug, info};
 use log4rs::append::file::FileAppender;
@@ -52,7 +56,13 @@ fn init() -> Model {
 
     log4rs::init_config(log_config).unwrap();
 
+    let top_bar = meta.api_token.clone().map(|_| {
+        let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());
+        TopBar { disk_meta }
+    });
+
     Model {
+        top_bar,
         fs,
         config,
         popup: if meta.api_token.is_some() {
@@ -64,7 +74,6 @@ fn init() -> Model {
             })
         },
         config_path: get_real_config_path(&args.conf),
-        meta,
         meta_db,
         disk_client,
     }

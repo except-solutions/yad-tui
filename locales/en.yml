@@ -13,4 +13,10 @@ disk:
     unauthorized: "Authorization error, please log in againg"
     unknown: "Unknown server error"
     disk_space: "Cloud space is left, opperation is impossible"
+    forbidden: "Access to this information denied"
+
+top_bar:
+  user: User
+  total_space: Total space
+  used_space: Used space
 

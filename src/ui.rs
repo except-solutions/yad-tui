@@ -1,9 +1,9 @@
 use crate::{
-    components::popups::login_ui::render_login_form,
+    components::{common::Widget, popups::login_ui::render_login_form},
     config::get_text_config,
     models::model::{Model, Popup},
 };
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::layout::{Constraint, Layout, Rect};
 
 use crate::components::main_screen::next_dir::NextDir;
 use ratatui::widgets::{Block, Clear, Paragraph};
@@ -11,17 +11,23 @@ use ratatui::Frame;
 
 pub fn ui(model: &mut Model, frame: &mut Frame) {
     if model.is_authenticated() {
-        let [previous_dir_area, current_dir_area, next_dir_area] = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![
-                Constraint::Percentage(20),
-                Constraint::Percentage(50),
-                Constraint::Percentage(50),
-            ])
-            .split(frame.size())
-            .to_vec()[..]
+        let [top_bar, dirs] =
+            Layout::vertical([Constraint::Percentage(5), Constraint::Percentage(95)])
+                .split(frame.size())
+                .to_vec()[..]
         else {
-            panic!("Unexpected areas")
+            panic!("Unexpected areas count!");
+        };
+
+        let [previous_dir_area, current_dir_area, next_dir_area] = Layout::horizontal([
+            Constraint::Percentage(20),
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
+        ])
+        .areas(dirs);
+
+        if let Some(top_bar_widget) = &model.top_bar {
+            top_bar_widget.render(frame, top_bar);
         };
 
         model.fs.previous_dir.render(previous_dir_area, frame);

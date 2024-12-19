@@ -1,5 +1,6 @@
+use crate::components::main_screen::top_bar::TopBar;
 use crate::fs::FS;
-use crate::{config::Config, disk_client::DiskClient, meta_db::Meta};
+use crate::{config::Config, disk_client::DiskClient};
 use jammdb::DB;
 use std::{fmt, path::PathBuf};
 
@@ -13,11 +14,11 @@ pub enum Popup {
 }
 
 pub struct Model {
+    pub top_bar: Option<TopBar>,
     pub fs: FS,
     pub popup: Option<Popup>,
     pub config: Config,
     pub config_path: PathBuf,
-    pub meta: Meta,
     pub meta_db: DB,
     pub disk_client: DiskClient,
 }
@@ -29,7 +30,6 @@ impl fmt::Debug for Model {
             .field("popup", &self.popup)
             .field("config", &self.config)
             .field("config_path", &self.config_path)
-            .field("meta", &self.meta)
             .field("disk_client", &self.disk_client)
             .finish()
     }
@@ -37,6 +37,6 @@ impl fmt::Debug for Model {
 
 impl Model {
     pub fn is_authenticated(&self) -> bool {
-        self.meta.api_token.is_some()
+        self.disk_client.token.is_some()
     }
 }
