@@ -41,6 +41,37 @@ pub struct DiskMetaResponse {
     pub user: User,
 }
 
+#[derive(Deserialize)]
+pub struct DirItem {
+    pub name: String,
+    pub resource_id: String,
+    pub path: String,
+    pub r#type: String,
+    pub created: String,
+    pub modified: String,
+    pub revision: u64,
+}
+
+#[derive(Deserialize)]
+pub struct DirItems {
+    pub limit: u32,
+    pub offset: u32,
+    pub total: u32,
+    pub items: Vec<DirItem>,
+}
+
+#[derive(Deserialize)]
+pub struct ItemResponse {
+    pub name: String,
+    pub resource_id: String,
+    pub path: String,
+    pub r#type: String,
+    pub created: String,
+    pub modified: String,
+    pub revision: u64,
+    pub _embedded: DirItems,
+}
+
 #[derive(Debug)]
 pub enum DiskError {
     UnknownServer(String),
@@ -154,6 +185,31 @@ impl DiskClient {
             .call();
 
         self.match_response::<DiskMetaResponse>(response)
+    }
+
+    pub fn item(
+        &self,
+        path: &str,
+        offset: Option<u32>,
+        limit: Option<u32>,
+    ) -> Result<ItemResponse, DiskError> {
+        let token = self.token.clone().ok_or(DiskError::EmptyToken)?;
+
+        let offset_q = offset.map(|o| format!("&offset={}", o)).unwrap_or("".to_string());
+        let limit_q = limit.map(|l| format!("&limit={}", l)).unwrap_or("".to_string());
+        let optional_query_param = offset_q + &limit_q;
+
+        let response = ureq::get(
+            format!(
+                "{}/resources?path={}{}",
+                &self.api_url, path, optional_query_param
+            )
+            .as_str(),
+        )
+        .set("Authorization", &format!("OAuth {token}", token = token))
+        .call();
+
+        self.match_response::<ItemResponse>(response)
     }
 
     fn match_response<T: DeserializeOwned>(

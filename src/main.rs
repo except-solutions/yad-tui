@@ -55,6 +55,7 @@ fn init() -> Model {
         .unwrap();
 
     log4rs::init_config(log_config).unwrap();
+    let dr = disk_client.item("/", None, Some(1000)).unwrap();
 
     let top_bar = meta.api_token.clone().map(|_| {
         let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());
