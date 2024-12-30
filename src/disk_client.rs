@@ -5,7 +5,7 @@ use base64::prelude::*;
 use log;
 use rust_i18n::t;
 use serde::{de::DeserializeOwned, Deserialize};
-use ureq::Error as HTTPError;
+use ureq::{Error as HTTPError, Request};
 
 #[derive(Deserialize)]
 enum AuthResponse {
@@ -132,6 +132,7 @@ impl DiskClient {
     }
 
     pub fn auth(&self, code: String) -> Result<SuccessAuth, String> {
+        // TODO: rewrite with new api match_respose, set_token etc
         let url = &format!("{}/token", self.oauth_url);
         let token = BASE64_STANDARD.encode(format!("{}:{}", &self.client_id, &self.client_secret));
         log::info!("Try fetch api token, url: {}, code: {}", url, code);
@@ -178,12 +179,7 @@ impl DiskClient {
     }
 
     pub fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
-        let token = self.token.clone().ok_or(DiskError::EmptyToken)?;
-
-        let response = ureq::get(&self.api_url)
-            .set("Authorization", &format!("OAuth {token}", token = token))
-            .call();
-
+        let response = self.prepare_request(|| ureq::get(&self.api_url))?.call();
         self.match_response::<DiskMetaResponse>(response)
     }
 
@@ -193,23 +189,34 @@ impl DiskClient {
         offset: Option<u32>,
         limit: Option<u32>,
     ) -> Result<ItemResponse, DiskError> {
-        let token = self.token.clone().ok_or(DiskError::EmptyToken)?;
-
-        let offset_q = offset.map(|o| format!("&offset={}", o)).unwrap_or("".to_string());
-        let limit_q = limit.map(|l| format!("&limit={}", l)).unwrap_or("".to_string());
+        let offset_q = offset
+            .map(|o| format!("&offset={}", o))
+            .unwrap_or("".to_string());
+        let limit_q = limit
+            .map(|l| format!("&limit={}", l))
+            .unwrap_or("".to_string());
         let optional_query_param = offset_q + &limit_q;
-
-        let response = ureq::get(
-            format!(
-                "{}/resources?path={}{}",
-                &self.api_url, path, optional_query_param
-            )
-            .as_str(),
-        )
-        .set("Authorization", &format!("OAuth {token}", token = token))
-        .call();
-
+        let response = self
+            .prepare_request(|| {
+                ureq::get(
+                    format!(
+                        "{}/resources?path={}{}",
+                        &self.api_url, path, optional_query_param
+                    )
+                    .as_str(),
+                )
+            })?
+            .call();
         self.match_response::<ItemResponse>(response)
+    }
+
+    fn prepare_request(&self, request_f: impl Fn() -> Request) -> Result<Request, DiskError> {
+        self.set_api_token(request_f())
+    }
+
+    fn set_api_token(&self, request: Request) -> Result<Request, DiskError> {
+        let token = self.token.clone().ok_or(DiskError::EmptyToken)?;
+        Ok(request.set("Authorization", &format!("OAuth {token}", token = token)))
     }
 
     fn match_response<T: DeserializeOwned>(

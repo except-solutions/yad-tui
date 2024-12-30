@@ -4,11 +4,34 @@ use ratatui::style::palette::tailwind::SLATE;
 use ratatui::widgets::ListItem;
 use std::path::PathBuf;
 
+
+#[derive(Debug)]
+enum State {
+    Local,
+    Cloud,
+    Synced,
+    Syncing
+}
+
+
+#[derive(Debug)]
+pub struct CloudFile {
+
+}
+
+#[derive(Debug)]
+pub struct LocalFile {
+
+}
+
 #[derive(Debug)]
 pub struct File {
     pub name: String,
     pub file_type: NodeType,
     pub path: PathBuf,
+    pub state: State,
+    pub cloud: Option<CloudFile>,
+    pub local: Option<LocalFile>
 }
 
 #[derive(Clone, Debug, Ord, Eq, PartialOrd, PartialEq)]
@@ -38,3 +61,4 @@ impl From<&File> for ListItem<'_> {
         ListItem::new(line)
     }
 }
+

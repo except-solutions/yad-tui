@@ -37,7 +37,6 @@ fn init() -> Model {
     rust_i18n::set_locale(config.main.lang.as_str());
 
     let (meta_db, meta) = init_db(&config);
-    let fs = <FS as ReaderHOF>::from_path(&config.main.sync_dir_path, read_dir);
     let disk_client = DiskClient::from_app_conf(&config, &meta);
 
     let log_file = FileAppender::builder()
@@ -56,6 +55,7 @@ fn init() -> Model {
 
     log4rs::init_config(log_config).unwrap();
     let dr = disk_client.item("/", None, Some(1000)).unwrap();
+    let fs = FS::from_path(&config.main.sync_dir_path, read_dir);
 
     let top_bar = meta.api_token.clone().map(|_| {
         let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());
