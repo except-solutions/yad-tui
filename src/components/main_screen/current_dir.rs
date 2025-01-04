@@ -1,5 +1,6 @@
 use crate::fs::ReaderHOF;
 use crate::models::file::File;
+use crate::utils::dir_reader::DirReader;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Modifier, Style};
 use ratatui::style::palette::material::BLUE;
@@ -20,11 +21,11 @@ pub struct CurrentDir {
 }
 
 impl ReaderHOF for CurrentDir {
-    fn from_path(path: &String, fs_reader: fn(&PathBuf) -> Vec<File>) -> Self {
+    fn from_path(path: &String, dir_reader: DirReader) -> Self {
         let mut path_buf = PathBuf::new();
         path_buf.push(path);
-        let items = fs_reader(&path_buf);
-        Self::new(path_buf, items)
+        let items = dir_reader.read(path);
+        Self::new(path_buf, items.unwrap())
     }
 }
 

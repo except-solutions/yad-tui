@@ -1,20 +1,18 @@
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::disk_client::{DirItem, DiskClient, DiskError};
+use crate::error::AppError;
 use crate::models::file::{CloudFile, File, LocalFile, NodeType, State};
 use crate::models::model::Model;
+use crate::utils::dir_reader::DirReader;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Error;
 use std::path::PathBuf;
 
-enum AppErrors {
-    DiskErrors(DiskError),
-    FSErrors(Error),
-}
 
 pub trait ReaderHOF {
-    fn from_path(path_buf: &String, fs_reader: fn(&str, &Model) -> Result<Vec<File>, AppErrors>) -> Self;
+    fn from_path(path_buf: &String, dir_reader: DirReader) -> Self;
 }
 
 #[derive(Debug)]
@@ -22,16 +20,16 @@ pub struct FS {
     pub next_dir: Option<NextDir>,
     pub current_dir: CurrentDir,
     pub previous_dir: PreviousDir,
-    pub reader_func: fn(&str, &Model) -> Result<Vec<File>, AppErrors>,
+    pub dir_reader: DirReader
 }
 
 impl ReaderHOF for FS {
-    fn from_path(path: &String, fs_reader: fn(&str, &Model) -> Result<Vec<File>, AppErrors>) -> Self {
-        let current_dir = CurrentDir::from_path(path, fs_reader);
-        let previous_dir = PreviousDir::from_path(path, fs_reader);
+    fn from_path(path: &String, dir_reader: DirReader) -> Self {
+        let current_dir = CurrentDir::from_path(path, dir_reader.clone());
+        let previous_dir = PreviousDir::from_path(path, dir_reader.clone());
         let next_dir = None;
 
-        Self::new(previous_dir, current_dir, next_dir, fs_reader)
+        Self::new(previous_dir, current_dir, next_dir, dir_reader)
     }
 }
 
@@ -40,13 +38,13 @@ impl FS {
         previous_dir: PreviousDir,
         current_dir: CurrentDir,
         next_dir: Option<NextDir>,
-        reader_func: fn(&str, &Model) -> Result<Vec<File>, AppErrors>,
+        dir_reader: DirReader,
     ) -> Self {
         Self {
             next_dir,
             current_dir,
             previous_dir,
-            reader_func,
+            dir_reader,
         }
     }
 
@@ -70,16 +68,16 @@ impl FS {
             if selected.is_dir() {
                 let path = String::from(selected.local.clone().unwrap().path.to_str().unwrap());
 
-                self.previous_dir = PreviousDir::from_path(&path, self.reader_func);
-                self.current_dir = CurrentDir::from_path(&path, self.reader_func)
+                self.previous_dir = PreviousDir::from_path(&path, self.dir_reader.clone());
+                self.current_dir = CurrentDir::from_path(&path, self.dir_reader.clone())
             }
         }
     }
 
     pub fn open_previous(&mut self) {
         let path = String::from(self.previous_dir.path.to_str().unwrap());
-        self.current_dir = CurrentDir::from_path(&path, self.reader_func);
-        self.previous_dir = PreviousDir::from_path(&path, self.reader_func)
+        self.current_dir = CurrentDir::from_path(&path, self.dir_reader.clone());
+        self.previous_dir = PreviousDir::from_path(&path, self.dir_reader.clone());
     }
 
     fn set_next_dir_from_current(&mut self) {
@@ -95,57 +93,57 @@ impl FS {
                 next_path_buf.push(&selected.name);
 
                 if let Some(path) = next_path_buf.to_str() {
-                    self.next_dir = Some(NextDir::from_path(&String::from(path), self.reader_func))
+                    self.next_dir = Some(NextDir::from_path(&String::from(path), self.dir_reader.clone()))
                 }
             }
         }
     }
 }
 
-pub fn read_dir(path: &str, model: &Model) -> Result<Vec<File>, AppErrors> {
-    let path_b = PathBuf::from(model.config.main.sync_dir_path.clone() + path.clone());
-    // TODO: implement paging
-    let disk_items = model
-        .disk_client
-        .item(path, None, Some(1000))
-        .map(|item| {
-            item._embedded
-                .items
-                .into_iter()
-                .map(|i| (i.name.clone(), i))
-                .collect::<HashMap<String, DirItem>>()
-        })
-        .map_err(AppErrors::DiskErrors)?;
-    let dir_entities = fs::read_dir(path_b).map_err(AppErrors::FSErrors)?;
-
-    let (valid_entites, invalid_entities) : (Vec<Result<File, _>>, Vec<_>) = dir_entities
-        .map(|entry| {
-            entry.and_then(|e| {
-                let f_name = e.file_name().into_string().unwrap();
-                let f_type = e.file_type()?;
-                // TODO fill
-                let cloud = disk_items.get(&f_name).map(|cloud_item| CloudFile {});
-                let local = LocalFile { path: e.path() };
-                let node_type = if f_type.is_file() {
-                    NodeType::File
-                } else {
-                    NodeType::Dir
-                };
-
-                Ok(File {
-                    name: f_name,
-                    file_type: node_type,
-                    state: cloud.clone().map(|_| State::Synced).unwrap_or(State::Local),
-                    cloud,
-                    local: Some(local),
-                })
-            })
-        })
-        .partition(Result::is_ok);
-    let collected = valid_entites.into_iter().map(Result::unwrap).collect::<Vec<File>>();
-    // TODO sort results, add clouds only files,  prepare errors    
-    Ok(collected)
-}
+// pub fn read_dir(path: &str, model: &Model) -> Result<Vec<File>, AppErrors> {
+//     let path_b = PathBuf::from(model.config.main.sync_dir_path.clone() + path.clone());
+//     // TODO: implement paging
+//     let disk_items = model
+//         .disk_client
+//         .item(path, None, Some(1000))
+//         .map(|item| {
+//             item._embedded
+//                 .items
+//                 .into_iter()
+//                 .map(|i| (i.name.clone(), i))
+//                 .collect::<HashMap<String, DirItem>>()
+//         })
+//         .map_err(AppErrors::DiskErrors)?;
+//     let dir_entities = fs::read_dir(path_b).map_err(AppErrors::FSErrors)?;
+// 
+//     let (valid_entites, invalid_entities) : (Vec<Result<File, _>>, Vec<_>) = dir_entities
+//         .map(|entry| {
+//             entry.and_then(|e| {
+//                 let f_name = e.file_name().into_string().unwrap();
+//                 let f_type = e.file_type()?;
+//                 // TODO fill
+//                 let cloud = disk_items.get(&f_name).map(|cloud_item| CloudFile {});
+//                 let local = LocalFile { path: e.path() };
+//                 let node_type = if f_type.is_file() {
+//                     NodeType::File
+//                 } else {
+//                     NodeType::Dir
+//                 };
+// 
+//                 Ok(File {
+//                     name: f_name,
+//                     file_type: node_type,
+//                     state: cloud.clone().map(|_| State::Synced).unwrap_or(State::Local),
+//                     cloud,
+//                     local: Some(local),
+//                 })
+//             })
+//         })
+//         .partition(Result::is_ok);
+//     let collected = valid_entites.into_iter().map(Result::unwrap).collect::<Vec<File>>();
+//     // TODO sort results, add clouds only files,  prepare errors    
+//     Ok(collected)
+// }
 
 //pub fn read_dir(path: &str, model: &Model) -> Vec<File> {
 //    match fs::read_dir(path) {

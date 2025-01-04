@@ -41,7 +41,7 @@ pub struct DiskMetaResponse {
     pub user: User,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct DirItem {
     pub name: String,
     pub resource_id: String,
