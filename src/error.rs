@@ -7,5 +7,3 @@ pub enum AppError {
     DiskErrors(DiskError),
     FSErrors(Error),
 }
-
-

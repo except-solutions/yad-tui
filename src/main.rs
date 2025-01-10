@@ -7,7 +7,6 @@ use ratatui::{
 };
 use std::io::{self, stdout};
 
-use yad_tui::{events::handle_events, utils::dir_reader::DirReader};
 use yad_tui::meta_db::init_db;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
@@ -17,6 +16,7 @@ use yad_tui::{
     config::{get_real_config_path, get_toml_config},
     models::disk_meta::DiskMeta,
 };
+use yad_tui::{events::handle_events, utils::dir_reader::DirReader};
 
 use log::{debug, info};
 use log4rs::append::file::FileAppender;
@@ -55,9 +55,9 @@ fn init() -> Model {
     log4rs::init_config(log_config).unwrap();
     // let dr = disk_client.item("/", None, Some(1000)).unwrap();
 
-    let dir_reader = DirReader { 
+    let dir_reader = DirReader {
         sync_dir_path: config.main.sync_dir_path.clone(),
-        disk_client: disk_client.clone()
+        disk_client: disk_client.clone(),
     };
 
     let fs = FS::from_path(&"/".to_string(), dir_reader);

@@ -12,9 +12,10 @@ use std::path::PathBuf;
 const HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier::BOLD);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PreviousDir {
     pub path: PathBuf,
+    pub item: File,
     pub items: Vec<File>,
 }
 
@@ -31,24 +32,26 @@ impl ReaderHOF for PreviousDir {
             path_buf.push(path);
         }
 
-        let items = dir_reader.read(path_buf.to_str().unwrap());
-        Self::new(path_buf, items.unwrap())
+        let (item, items) = dir_reader
+            .read_local_with_cloud(path_buf.to_str().unwrap())
+            .unwrap();
+        Self::new(path_buf, item, items)
     }
 }
 
 impl PreviousDir {
-    pub fn new(path: PathBuf, items: Vec<File>) -> Self {
-        Self { items, path }
+    pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {
+        Self { item, items, path }
     }
 
-    pub fn render(&self, area: Rect, frame: &mut Frame) -> () {
+    pub fn render(&self, area: Rect, frame: &mut Frame) {
         let header: Block = Block::new()
             .title(Line::raw(self.path.to_string_lossy()).centered())
             .borders(Borders::TOP)
             .border_set(symbols::border::EMPTY)
             .border_style(HEADER_STYLE);
 
-        let items: Vec<ListItem> = self.items.iter().map(|file| ListItem::from(file)).collect();
+        let items: Vec<ListItem> = self.items.iter().map(ListItem::from).collect();
 
         let current_dirs_list = List::new(items)
             .block(header)

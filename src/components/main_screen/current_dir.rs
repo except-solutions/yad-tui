@@ -13,9 +13,10 @@ use std::path::PathBuf;
 const HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier::BOLD);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CurrentDir {
     pub path: PathBuf,
+    pub item: File,
     pub items: Vec<File>,
     pub state: ListState,
 }
@@ -24,15 +25,18 @@ impl ReaderHOF for CurrentDir {
     fn from_path(path: &String, dir_reader: DirReader) -> Self {
         let mut path_buf = PathBuf::new();
         path_buf.push(path);
-        let items = dir_reader.read(path);
-        Self::new(path_buf, items.unwrap())
+        let (item, items) = dir_reader.read_local_with_cloud(path).unwrap();
+        Self::new(path_buf, item, items)
     }
 }
 
 impl CurrentDir {
-    pub fn new(path: PathBuf, items: Vec<File>) -> Self {
+    pub fn create() {}
+
+    pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {
         Self {
             path,
+            item,
             items,
             state: ListState::default().with_selected(Some(0)),
         }

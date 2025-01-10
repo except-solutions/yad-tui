@@ -41,7 +41,7 @@ pub struct DiskMetaResponse {
     pub user: User,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Hash, Eq, PartialEq, Debug)]
 pub struct DirItem {
     pub name: String,
     pub resource_id: String,
@@ -50,6 +50,12 @@ pub struct DirItem {
     pub created: String,
     pub modified: String,
     pub revision: u64,
+}
+
+impl DirItem {
+    pub fn is_dir(&self) -> bool {
+        &self.r#type == "dir"
+    }
 }
 
 #[derive(Deserialize)]
@@ -70,6 +76,12 @@ pub struct ItemResponse {
     pub modified: String,
     pub revision: u64,
     pub _embedded: DirItems,
+}
+
+impl ItemResponse {
+    pub fn is_dir(&self) -> bool {
+        &self.r#type == "dir"
+    }
 }
 
 #[derive(Debug)]
