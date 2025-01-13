@@ -1,11 +1,11 @@
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
-use crate::models::file::NodeType;
+use crate::models::file::{NodeType, State};
 use crate::utils::dir_reader::DirReader;
 use std::path::PathBuf;
 
 pub trait ReaderHOF {
-    fn from_path(path: &String, dir_reader: DirReader) -> Self;
+    fn from_path(path: PathBuf, dir_reader: DirReader) -> Self;
 }
 
 #[derive(Debug, Clone)]
@@ -16,20 +16,17 @@ pub struct FS {
     pub dir_reader: DirReader,
 }
 
-impl ReaderHOF for FS {
-    fn from_path(path: &String, dir_reader: DirReader) -> Self {
-        let current_dir = CurrentDir::from_path(path, dir_reader.clone());
-        let previous_dir = if path == "/" {
-            None
-        } else {
-            Some(PreviousDir::from_path(path, dir_reader.clone()))
-        };
+impl FS {
+    pub fn create(dir_reader: DirReader) -> Self {
+        let path = PathBuf::from("/");
+        let current_dir = CurrentDir::from_path(path.clone(), dir_reader.clone());
+        let previous_dir = None;
+
         let next_dir = current_dir.items.first().and_then(|item| {
             if item.state.in_cloud() {
-                Some(NextDir::from_path(
-                    &format!("{}{}", path, &item.name),
-                    dir_reader.clone(),
-                ))
+                let mut next_path = path.clone();
+                next_path.push(item.name.clone());
+                Some(NextDir::from_path(next_path, dir_reader.clone()))
             } else {
                 None
             }
@@ -71,20 +68,58 @@ impl FS {
 
         if let Some(selected) = selected {
             if selected.is_dir() {
-                let path = String::from(selected.local.clone().unwrap().path.to_str().unwrap());
+                let path = self.current_dir.path.join(selected.name.clone());
+                self.previous_dir = Some(PreviousDir::new(
+                    self.current_dir.path.clone(),
+                    self.current_dir.item.clone(),
+                    self.current_dir.items.clone(),
+                ));
 
-                self.previous_dir = Some(PreviousDir::from_path(&path, self.dir_reader.clone()));
-                self.current_dir = CurrentDir::from_path(&path, self.dir_reader.clone())
+                match selected.state {
+                    State::Cloud => {
+                        let (item, items) = self
+                            .dir_reader
+                            .clone()
+                            .read_cloud(path.as_os_str().to_str().unwrap())
+                            .unwrap();
+
+                        self.current_dir =
+                            CurrentDir::new(self.current_dir.path.clone(), item, items);
+                    }
+                    State::Local => {
+                        let (item, items) = self
+                            .dir_reader
+                            .clone()
+                            .read_local(path.as_os_str().to_str().unwrap())
+                            .unwrap();
+
+                        self.current_dir =
+                            CurrentDir::new(self.current_dir.path.clone(), item, items);
+                    }
+                    State::Synced | State::Syncing => {
+                        let (item, items) = self
+                            .dir_reader
+                            .clone()
+                            .read_local_with_cloud(path.as_os_str().to_str().unwrap())
+                            .unwrap();
+
+                        self.current_dir =
+                            CurrentDir::new(self.current_dir.path.clone(), item, items);
+                    }
+                };
             }
         }
     }
 
     pub fn open_previous(&mut self) {
-
         if let Some(previous_dir) = &self.previous_dir {
-            let path = String::from(previous_dir.path.to_str().unwrap());
-            self.current_dir = CurrentDir::from_path(&path, self.dir_reader.clone());
-            self.previous_dir = Some(PreviousDir::from_path(&path, self.dir_reader.clone()));
+            self.current_dir =
+                CurrentDir::from_path(previous_dir.path.clone(), self.dir_reader.clone());
+
+            self.previous_dir = previous_dir
+                .path
+                .parent()
+                .map(|b| PreviousDir::from_path(b.to_path_buf(), self.dir_reader.clone()));
         }
     }
 
@@ -100,12 +135,7 @@ impl FS {
                 next_path_buf.push(&self.current_dir.path);
                 next_path_buf.push(&selected.name);
 
-                if let Some(path) = next_path_buf.to_str() {
-                    self.next_dir = Some(NextDir::from_path(
-                        &String::from(path),
-                        self.dir_reader.clone(),
-                    ))
-                }
+                self.next_dir = Some(NextDir::from_path(next_path_buf, self.dir_reader.clone()))
             }
         }
     }

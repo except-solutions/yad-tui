@@ -60,7 +60,7 @@ fn init() -> Model {
         disk_client: disk_client.clone(),
     };
 
-    let fs = FS::from_path(&"/".to_string(), dir_reader);
+    let fs = FS::create(dir_reader);
 
     let top_bar = meta.api_token.clone().map(|_| {
         let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());

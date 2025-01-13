@@ -22,17 +22,15 @@ pub struct CurrentDir {
 }
 
 impl ReaderHOF for CurrentDir {
-    fn from_path(path: &String, dir_reader: DirReader) -> Self {
-        let mut path_buf = PathBuf::new();
-        path_buf.push(path);
-        let (item, items) = dir_reader.read_local_with_cloud(path).unwrap();
-        Self::new(path_buf, item, items)
+    fn from_path(path: PathBuf, dir_reader: DirReader) -> Self {
+        let (item, items) = dir_reader
+            .read_local_with_cloud(path.as_os_str().to_str().unwrap())
+            .unwrap();
+        Self::new(path, item, items)
     }
 }
 
 impl CurrentDir {
-    pub fn create() {}
-
     pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {
         Self {
             path,

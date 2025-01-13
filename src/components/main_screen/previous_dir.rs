@@ -20,33 +20,22 @@ pub struct PreviousDir {
 }
 
 impl ReaderHOF for PreviousDir {
-    fn from_path(path: &String, dir_reader: DirReader) -> Self {
-        let mut current_buf = PathBuf::new();
-        current_buf.push(path);
-
-        let mut path_buf = PathBuf::new();
-
-        if let Some(dir) = current_buf.parent() {
-            path_buf.push(dir)
-        } else {
-            path_buf.push(path);
-        }
-
+    fn from_path(path: PathBuf, dir_reader: DirReader) -> Self {
         let (item, items) = dir_reader
-            .read_local_with_cloud(path_buf.to_str().unwrap())
+            .read_local_with_cloud(path.to_str().unwrap())
             .unwrap();
-        Self::new(path_buf, item, items)
+        Self::new(path.clone(), item, items)
     }
 }
 
 impl PreviousDir {
     pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {
-        Self { item, items, path }
+        Self { path, item, items }
     }
 
     pub fn render(&self, area: Rect, frame: &mut Frame) {
         let header: Block = Block::new()
-            .title(Line::raw(self.path.to_string_lossy()).centered())
+            .title(Line::raw(self.path.to_str().unwrap()).centered())
             .borders(Borders::TOP)
             .border_set(symbols::border::EMPTY)
             .border_style(HEADER_STYLE);
@@ -60,5 +49,15 @@ impl PreviousDir {
             .highlight_spacing(HighlightSpacing::Always);
 
         frame.render_widget(current_dirs_list, area)
+    }
+
+    pub fn render_empty(area: Rect, root_dir_title: String, frame: &mut Frame) {
+        let header: Block = Block::new()
+            .title(Line::raw(root_dir_title))
+            .borders(Borders::TOP)
+            .border_set(symbols::border::EMPTY)
+            .border_style(HEADER_STYLE);
+
+        frame.render_widget(header, area)
     }
 }

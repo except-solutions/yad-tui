@@ -12,6 +12,8 @@ use crate::{
 };
 use log::{debug, info};
 
+use super::common::read_f_name;
+
 pub enum ReadingType {
     Local,
     Cloud,
@@ -86,8 +88,17 @@ impl DirReader {
         })
     }
 
-    pub fn read_local(&self, path: &str) -> Result<Vec<File>, AppError> {
-        self.read(path, HashMap::new())
+    pub fn read_local(&self, path: &str) -> Result<(File, Vec<File>), AppError> {
+        let item = File {
+            name: read_f_name(path)?,
+            file_type: NodeType::Dir,
+            state: State::Local,
+            local: Some(LocalFile {
+                path: PathBuf::from(path),
+            }),
+            cloud: None,
+        };
+        self.read(path, HashMap::new()).map(|items| (item, items))
     }
 
     fn fetch_cloud_dirs(&self, path: &str) -> Result<ItemResponse, AppError> {
@@ -118,7 +129,7 @@ impl DirReader {
                         Ok(File {
                             name: f_name,
                             file_type: node_type,
-                            // TODO: check file is synced or outdated
+                            // TODO: checl file is synced or outdated
                             state: cloud.clone().map(|_| State::Synced).unwrap_or(State::Local),
                             cloud,
                             local: Some(local),
