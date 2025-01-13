@@ -1,6 +1,7 @@
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::models::file::{File, NodeType};
+use crate::utils::common::remove_trailing_slash;
 use std::fs;
 use std::path::PathBuf;
 
@@ -67,8 +68,12 @@ impl FS {
         }
     }
 
-    pub fn open_previous(&mut self) {
+    pub fn open_previous(&mut self, sync_dir_path: &String) {
         let path = String::from(self.previous_dir.path.to_str().unwrap());
+        let stripped_path = remove_trailing_slash(sync_dir_path.clone());
+        if path.len() < stripped_path.len() {
+            return;
+        }
         self.current_dir = CurrentDir::from_path(&path, self.reader_func);
         self.previous_dir = PreviousDir::from_path(&path, self.reader_func)
     }

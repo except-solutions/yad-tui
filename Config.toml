@@ -12,4 +12,3 @@ client_secret = "7875f96f452e417d8e532a63e65e1c19"
 
 [meta_db]
 path = ".cache/yad/meta.db"
-

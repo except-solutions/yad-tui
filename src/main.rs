@@ -83,7 +83,7 @@ fn main() -> io::Result<()> {
     let mut model = init();
     info!("Start application");
     info!("Initialize application model");
-    debug!("Initializated model: {:?}", model);
+    debug!("Initialized model: {:?}", model);
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;

@@ -41,7 +41,7 @@ pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
             Some(Continue)
         }
         (Message::EnterPrevDir, None) => {
-            model.fs.open_previous();
+            model.fs.open_previous(&model.config.main.sync_dir_path);
             Some(Continue)
         }
         (Continue, _) => Some(Continue),
