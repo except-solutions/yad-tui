@@ -1,6 +1,8 @@
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
+use crate::error::AppError;
 use crate::models::file::{NodeType, State};
+use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
 use std::path::PathBuf;
 
@@ -19,20 +21,24 @@ pub struct FS {
 impl FS {
     pub fn create(dir_reader: DirReader) -> Self {
         let path = PathBuf::from("/");
-        let current_dir = CurrentDir::from_path(path.clone(), dir_reader.clone());
+        let (item, items) = dir_reader.read_dir(path_buf_to_string(path.clone()).unwrap(), State::Synced).unwrap();
+        let current_dir = CurrentDir::new(path.clone(), item, items);
         let previous_dir = None;
 
         let next_dir = current_dir.items.first().and_then(|item| {
             if item.state.in_cloud() {
                 let mut next_path = path.clone();
                 next_path.push(item.name.clone());
-                Some(NextDir::from_path(next_path, dir_reader.clone()))
+                let (item, items) = dir_reader
+                     .read_dir(path_buf_to_string(next_path.clone()).unwrap(), item.state.clone()).unwrap();
+                Some(NextDir::new(next_path, item, items))
             } else {
                 None
             }
         });
         Self::new(previous_dir, current_dir, next_dir, dir_reader)
     }
+
 }
 
 impl FS {
@@ -60,83 +66,64 @@ impl FS {
         self.set_next_dir_from_current();
     }
 
-    pub fn open_selected(&mut self) {
-        let selected = self
-            .current_dir
-            .items
-            .get(self.current_dir.state.selected().unwrap());
+    pub fn open_selected(&mut self) -> Result<(), AppError> {
+        let selected = &self.current_dir.selected_file()?;
 
-        if let Some(selected) = selected {
-            if selected.is_dir() {
-                let path = self.current_dir.path.join(selected.name.clone());
-                self.previous_dir = Some(PreviousDir::new(
-                    self.current_dir.path.clone(),
-                    self.current_dir.item.clone(),
-                    self.current_dir.items.clone(),
-                ));
+        if selected.is_dir() {
+            let path = self.current_dir.path.join(selected.name.clone());
+            self.previous_dir = Some(PreviousDir::new(
+                self.current_dir.path.clone(),
+                self.current_dir.item.clone(),
+                self.current_dir.items.clone(),
+            ));
 
-                match selected.state {
-                    State::Cloud => {
-                        let (item, items) = self
-                            .dir_reader
-                            .clone()
-                            .read_cloud(path.as_os_str().to_str().unwrap())
-                            .unwrap();
+            let (item, items) = self
+                .dir_reader
+                .read_dir(path_buf_to_string(path.clone())?, selected.state.clone())?;
+            self.current_dir = CurrentDir::new(path.clone(), item, items);
+            self.set_next_dir_from_current();
+        }
 
-                        self.current_dir =
-                            CurrentDir::new(self.current_dir.path.clone(), item, items);
-                    }
-                    State::Local => {
-                        let (item, items) = self
-                            .dir_reader
-                            .clone()
-                            .read_local(path.as_os_str().to_str().unwrap())
-                            .unwrap();
+        Ok(())
+    }
 
-                        self.current_dir =
-                            CurrentDir::new(self.current_dir.path.clone(), item, items);
-                    }
-                    State::Synced | State::Syncing => {
-                        let (item, items) = self
-                            .dir_reader
-                            .clone()
-                            .read_local_with_cloud(path.as_os_str().to_str().unwrap())
-                            .unwrap();
+    pub fn open_previous(&mut self) -> Result<(), AppError> {
+        if let Some(previous_dir) = &self.previous_dir {
 
-                        self.current_dir =
-                            CurrentDir::new(self.current_dir.path.clone(), item, items);
-                    }
-                };
+            let (current_item, current_dir_items) = self
+                .dir_reader
+                .read_dir(path_buf_to_string(previous_dir.path.clone())?, previous_dir.item.state.clone())?;
+
+            self.current_dir = CurrentDir::new(previous_dir.path.clone(), current_item, current_dir_items);
+
+            if let Some(prev_path) = previous_dir.path.parent() {
+                let prev_path_buf = prev_path.to_path_buf();
+                let (item, items) = self.dir_reader.read_dir(path_buf_to_string(prev_path_buf.clone())?, previous_dir.item.state.clone())?;
+                self.previous_dir = Some(PreviousDir::new(prev_path_buf, item, items));
+            } else {
+                self.previous_dir = None;
             }
         }
+
+        Ok(())
     }
 
-    pub fn open_previous(&mut self) {
-        if let Some(previous_dir) = &self.previous_dir {
-            self.current_dir =
-                CurrentDir::from_path(previous_dir.path.clone(), self.dir_reader.clone());
-
-            self.previous_dir = previous_dir
-                .path
-                .parent()
-                .map(|b| PreviousDir::from_path(b.to_path_buf(), self.dir_reader.clone()));
-        }
-    }
-
-    fn set_next_dir_from_current(&mut self) {
+    fn set_next_dir_from_current(&mut self) -> Result<(), AppError> {
         let selected = self
             .current_dir
-            .items
-            .get(self.current_dir.state.selected().unwrap());
+            .selected_file()?;
 
-        if let Some(selected) = selected {
             if selected.file_type == NodeType::Dir {
                 let mut next_path_buf = PathBuf::new();
                 next_path_buf.push(&self.current_dir.path);
                 next_path_buf.push(&selected.name);
-
-                self.next_dir = Some(NextDir::from_path(next_path_buf, self.dir_reader.clone()))
+                let (item, items) = self
+                     .dir_reader
+                     .read_dir(path_buf_to_string(next_path_buf.clone())?, selected.state.clone())?;
+                self.next_dir = Some(NextDir::new(next_path_buf, item, items));
+            } else {
+                self.next_dir = None
             }
-        }
+        Ok(())
     }
 }

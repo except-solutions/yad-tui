@@ -8,6 +8,8 @@ pub enum AppError {
     FSErrors(Error),
     InvalidFileName(String),
     ConvertOsStringToStringErr(OsString),
+    ConvertPathBufToStr,
+    MissingSelectedElelement,
 }
 
 impl AppError {

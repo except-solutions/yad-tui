@@ -1,3 +1,4 @@
+use crate::error::AppError;
 use crate::fs::ReaderHOF;
 use crate::models::file::File;
 use crate::utils::dir_reader::DirReader;
@@ -21,14 +22,14 @@ pub struct CurrentDir {
     pub state: ListState,
 }
 
-impl ReaderHOF for CurrentDir {
-    fn from_path(path: PathBuf, dir_reader: DirReader) -> Self {
-        let (item, items) = dir_reader
-            .read_local_with_cloud(path.as_os_str().to_str().unwrap())
-            .unwrap();
-        Self::new(path, item, items)
-    }
-}
+// impl ReaderHOF for CurrentDir {
+//     fn from_path(path: PathBuf, dir_reader: DirReader) -> Self {
+//         let (item, items) = dir_reader
+//             .read_local_with_cloud(path.as_os_str().to_str().unwrap())
+//             .unwrap();
+//         Self::new(path, item, items)
+//     }
+// }
 
 impl CurrentDir {
     pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {
@@ -47,7 +48,7 @@ impl CurrentDir {
             .border_set(symbols::border::EMPTY)
             .border_style(HEADER_STYLE);
 
-        let items: Vec<ListItem> = self.items.iter().map(|file| ListItem::from(file)).collect();
+        let items: Vec<ListItem> = self.items.iter().map(ListItem::from).collect();
 
         let current_dirs_list = List::new(items)
             .block(header)
@@ -56,5 +57,17 @@ impl CurrentDir {
             .highlight_spacing(HighlightSpacing::Always);
 
         frame.render_stateful_widget(current_dirs_list, area, &mut self.state)
+    }
+
+    pub fn selected_file(&self) -> Result<File, AppError> {
+        let list_item_state = self
+            .state
+            .selected()
+            .ok_or(AppError::MissingSelectedElelement)?;
+
+        self.items
+            .get(list_item_state)
+            .cloned()
+            .ok_or(AppError::MissingSelectedElelement)
     }
 }

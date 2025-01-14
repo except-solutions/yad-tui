@@ -19,14 +19,14 @@ pub struct PreviousDir {
     pub items: Vec<File>,
 }
 
-impl ReaderHOF for PreviousDir {
-    fn from_path(path: PathBuf, dir_reader: DirReader) -> Self {
-        let (item, items) = dir_reader
-            .read_local_with_cloud(path.to_str().unwrap())
-            .unwrap();
-        Self::new(path.clone(), item, items)
-    }
-}
+//impl ReaderHOF for PreviousDir {
+//    fn from_path(path: PathBuf, dir_reader: DirReader) -> Self {
+//        let (item, items) = dir_reader
+//            .read_local_with_cloud(path.to_str().unwrap())
+//            .unwrap();
+//        Self::new(path.clone(), item, items)
+//    }
+//}
 
 impl PreviousDir {
     pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {
