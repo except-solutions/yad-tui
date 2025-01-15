@@ -1,7 +1,7 @@
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::error::AppError;
-use crate::models::file::NodeType;
+use crate::models::file::{File, NodeType};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
 use std::path::PathBuf;
@@ -21,18 +21,19 @@ impl FS {
         let current_dir = CurrentDir::new(path.clone(), item, items);
         let previous_dir = None;
 
-        let next_dir = current_dir.items.first().and_then(|item| {
-            if item.state.in_cloud() {
-                let mut next_path = path.clone();
-                next_path.push(item.name.clone());
-                let (item, items) = dir_reader
-                    .read_dir(path_buf_to_string(next_path.clone()).unwrap())
-                    .unwrap();
-                Some(NextDir::new(next_path, item, items))
-            } else {
-                None
-            }
-        });
+        let next_dir = if let Some(File {
+            file_type: NodeType::Dir,
+            name,
+            ..
+        }) = current_dir.items.first()
+        {
+            let next_path = path.clone().join(name.clone());
+            let (item, items) = dir_reader.read_dir(path_buf_to_string(next_path.clone())?)?;
+            Some(NextDir::new(next_path, item, items))
+        } else {
+            None
+        };
+
         Ok(Self::new(previous_dir, current_dir, next_dir, dir_reader))
     }
 }
