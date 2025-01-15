@@ -1,6 +1,4 @@
-use crate::fs::ReaderHOF;
 use crate::models::file::File;
-use crate::utils::dir_reader::DirReader;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Modifier, Style};
 use ratatui::style::palette::material::BLUE;

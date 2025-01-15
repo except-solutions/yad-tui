@@ -1,7 +1,5 @@
 use crate::error::AppError;
-use crate::fs::ReaderHOF;
 use crate::models::file::File;
-use crate::utils::dir_reader::DirReader;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Modifier, Style};
 use ratatui::style::palette::material::BLUE;
@@ -21,15 +19,6 @@ pub struct CurrentDir {
     pub items: Vec<File>,
     pub state: ListState,
 }
-
-// impl ReaderHOF for CurrentDir {
-//     fn from_path(path: PathBuf, dir_reader: DirReader) -> Self {
-//         let (item, items) = dir_reader
-//             .read_local_with_cloud(path.as_os_str().to_str().unwrap())
-//             .unwrap();
-//         Self::new(path, item, items)
-//     }
-// }
 
 impl CurrentDir {
     pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {

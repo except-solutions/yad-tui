@@ -10,6 +10,7 @@ pub enum AppError {
     ConvertOsStringToStringErr(OsString),
     ConvertPathBufToStr,
     MissingSelectedElelement,
+    MultipleErrors(Vec<AppError>),
 }
 
 impl AppError {

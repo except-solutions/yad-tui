@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    fs::{self},
+    fs::{self, ReadDir},
     io::Error,
     path::PathBuf,
 };
@@ -13,7 +13,6 @@ use crate::{
 
 use super::common::read_f_name;
 
-
 #[derive(Debug, Clone)]
 pub struct DirReader {
     pub sync_dir_path: String,
@@ -21,86 +20,71 @@ pub struct DirReader {
 }
 
 impl DirReader {
-    pub fn read_dir(&self, path: String, item_state: State) -> Result<(File, Vec<File>), AppError> {
-        match item_state {
-            State::Local => self.read_local(path),
-            State::Cloud => self.read_cloud(path),
-            State::Synced | State::Syncing => self.read_local_with_cloud(path),
-        }
-    }
+    pub fn read_dir(&self, path: String) -> Result<(File, Vec<File>), AppError> {
+        let path_buf = PathBuf::from(self.sync_dir_path.clone() + "/" + path.as_str());
 
-    pub fn read_local_with_cloud(&self, path: String) -> Result<(File, Vec<File>), AppError> {
-        let (_cloud_root_dir, cloud_dir_items) = self.fetch_cloud_dirs(path.clone()).map(|d| {
-            let items = d
-                ._embedded
-                .items
-                .clone()
-                .into_iter()
-                .map(|v| (v.name.clone(), v))
-                .collect::<HashMap<String, DirItem>>();
-            (d, items)
-        })?;
+        let cloud_dir = self.fetch_cloud_dirs(path.clone());
 
-        let root_dir = File {
-            name: path.clone(),
-            file_type: NodeType::Dir,
-            state: State::Synced,
-            cloud: Some(CloudFile {}),
-            local: Some(LocalFile {
-                path: PathBuf::from(self.sync_dir_path.clone() + "/" + path.as_str()),
-            }),
-        };
+        let (cloud_root_dir, cloud_dir_items) = self
+            .fetch_cloud_dirs(path.clone())
+            .map(|d| {
+                let items = d
+                    ._embedded
+                    .items
+                    .clone()
+                    .into_iter()
+                    .map(|v| (v.name.clone(), v))
+                    .collect::<HashMap<String, DirItem>>();
+                (Some(d), items)
+            })
+            .unwrap_or((None, HashMap::new()));
 
-        let dir_items = self.read(path, cloud_dir_items)?;
-        Ok((root_dir, dir_items))
-    }
+        let local_dir = fs::read_dir(path_buf.clone()).map_err(AppError::FSErrors);
+        let local_dir_exists = local_dir.is_ok();
 
-    pub fn read_cloud(&self, path: String) -> Result<(File, Vec<File>), AppError> {
-        self.fetch_cloud_dirs(path).map(|d| {
-            let item = File {
-                name: d.name.clone(),
-                file_type: if d.is_dir() {
-                    NodeType::Dir
+        let root_dir_f = |state: State| {
+            Ok(File {
+                name: read_f_name(path.clone())?,
+                file_type: NodeType::Dir,
+                state,
+                cloud: cloud_root_dir.map(|_cd| CloudFile {}),
+                local: if local_dir_exists {
+                    Some(LocalFile { path: path_buf })
                 } else {
-                    NodeType::File
+                    None
                 },
-                cloud: Some(CloudFile {}),
-                local: None,
-                state: State::Cloud,
-            };
-
-            let child_items = d
-                ._embedded
-                .items
-                .into_iter()
-                .map(|item| File {
-                    name: item.clone().name,
-                    file_type: if item.is_dir() {
-                        NodeType::Dir
-                    } else {
-                        NodeType::File
-                    },
-                    cloud: Some(CloudFile {}),
-                    local: None,
-                    state: State::Cloud,
-                })
-                .collect();
-
-            (item, child_items)
-        })
-    }
-
-    pub fn read_local(&self, path: String) -> Result<(File, Vec<File>), AppError> {
-        let item = File {
-            name: read_f_name(path.clone())?,
-            file_type: NodeType::Dir,
-            state: State::Local,
-            local: Some(LocalFile {
-                path: PathBuf::from(path.clone()),
-            }),
-            cloud: None,
+            })
         };
-        self.read(path, HashMap::new()).map(|items| (item, items))
+
+        match (cloud_dir, local_dir) {
+            (Ok(_), Ok(local)) => Ok((
+                root_dir_f(State::Synced)?,
+                self.read(local, cloud_dir_items)?,
+            )),
+            (Ok(_), Err(_)) => {
+                let dir_items = cloud_dir_items
+                    .into_values()
+                    .map(|item| File {
+                        name: item.clone().name,
+                        file_type: if item.is_dir() {
+                            NodeType::Dir
+                        } else {
+                            NodeType::File
+                        },
+                        cloud: Some(CloudFile {}),
+                        local: None,
+                        state: State::Cloud,
+                    })
+                    .collect::<Vec<File>>();
+                Ok((root_dir_f(State::Cloud)?, dir_items))
+            }
+            (Err(_), Ok(local)) => {
+                Ok((root_dir_f(State::Local)?, self.read(local, HashMap::new())?))
+            }
+            (Err(cloud_error), Err(local_error)) => {
+                Err(AppError::MultipleErrors(vec![cloud_error, local_error]))
+            }
+        }
     }
 
     fn fetch_cloud_dirs(&self, path: String) -> Result<ItemResponse, AppError> {
@@ -111,20 +95,17 @@ impl DirReader {
 
     fn read(
         &self,
-        path: String,
+        local_dir: ReadDir,
         cloud_dir: HashMap<String, DirItem>,
     ) -> Result<Vec<File>, AppError> {
-        let path_b = PathBuf::from(self.sync_dir_path.clone() + path.as_str());
-        let dir_entities = fs::read_dir(path_b).map_err(AppError::FSErrors)?;
-
         let (valid_entites, invalid_entities): (Vec<Result<File, _>>, Vec<Result<_, Error>>) =
-            dir_entities
+            local_dir
                 .map(|entry| {
                     entry.and_then(|e| {
                         let f_name = e.file_name().into_string().unwrap();
                         let f_type = e.file_type()?;
                         // TODO fill
-                        let cloud = cloud_dir.get(&f_name).map(|cloud_item| CloudFile {});
+                        let cloud = cloud_dir.get(&f_name).map(|_cloud_item| CloudFile {});
                         let local = LocalFile { path: e.path() };
                         let node_type = if f_type.is_file() {
                             NodeType::File

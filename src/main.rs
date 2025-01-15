@@ -22,7 +22,7 @@ use log::{debug, info};
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
-use yad_tui::fs::{ReaderHOF, FS};
+use yad_tui::fs::FS;
 use yad_tui::models::model::{Model, Popup};
 
 #[macro_use]
@@ -53,14 +53,13 @@ fn init() -> Model {
         )
         .unwrap();
     log4rs::init_config(log_config).unwrap();
-    // let dr = disk_client.item("/", None, Some(1000)).unwrap();
 
     let dir_reader = DirReader {
         sync_dir_path: config.main.sync_dir_path.clone(),
         disk_client: disk_client.clone(),
     };
 
-    let fs = FS::create(dir_reader);
+    let fs = FS::create(dir_reader).unwrap();
 
     let top_bar = meta.api_token.clone().map(|_| {
         let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());
