@@ -1,4 +1,4 @@
-use crate::fs::ReaderHOF;
+use crate::error::AppError;
 use crate::models::file::File;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Modifier, Style};
@@ -12,26 +12,19 @@ use std::path::PathBuf;
 const HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier::BOLD);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CurrentDir {
     pub path: PathBuf,
+    pub item: File,
     pub items: Vec<File>,
     pub state: ListState,
 }
 
-impl ReaderHOF for CurrentDir {
-    fn from_path(path: &String, fs_reader: fn(&PathBuf) -> Vec<File>) -> Self {
-        let mut path_buf = PathBuf::new();
-        path_buf.push(path);
-        let items = fs_reader(&path_buf);
-        Self::new(path_buf, items)
-    }
-}
-
 impl CurrentDir {
-    pub fn new(path: PathBuf, items: Vec<File>) -> Self {
+    pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {
         Self {
             path,
+            item,
             items,
             state: ListState::default().with_selected(Some(0)),
         }
@@ -44,7 +37,7 @@ impl CurrentDir {
             .border_set(symbols::border::EMPTY)
             .border_style(HEADER_STYLE);
 
-        let items: Vec<ListItem> = self.items.iter().map(|file| ListItem::from(file)).collect();
+        let items: Vec<ListItem> = self.items.iter().map(ListItem::from).collect();
 
         let current_dirs_list = List::new(items)
             .block(header)
@@ -53,5 +46,17 @@ impl CurrentDir {
             .highlight_spacing(HighlightSpacing::Always);
 
         frame.render_stateful_widget(current_dirs_list, area, &mut self.state)
+    }
+
+    pub fn selected_file(&self) -> Result<File, AppError> {
+        let list_item_state = self
+            .state
+            .selected()
+            .ok_or(AppError::MissingSelectedElelement)?;
+
+        self.items
+            .get(list_item_state)
+            .cloned()
+            .ok_or(AppError::MissingSelectedElelement)
     }
 }

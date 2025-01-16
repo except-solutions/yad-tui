@@ -1,4 +1,3 @@
-use crate::fs::ReaderHOF;
 use crate::models::file::File;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Modifier, Style};
@@ -11,43 +10,26 @@ use std::path::PathBuf;
 const HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier::BOLD);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PreviousDir {
     pub path: PathBuf,
+    pub item: File,
     pub items: Vec<File>,
 }
 
-impl ReaderHOF for PreviousDir {
-    fn from_path(path: &String, fs_reader: fn(&PathBuf) -> Vec<File>) -> Self {
-        let mut current_buf = PathBuf::new();
-        current_buf.push(path);
-
-        let mut path_buf = PathBuf::new();
-
-        if let Some(dir) = current_buf.parent() {
-            path_buf.push(dir)
-        } else {
-            path_buf.push(path);
-        }
-
-        let items = fs_reader(&path_buf);
-        Self::new(path_buf, items)
-    }
-}
-
 impl PreviousDir {
-    pub fn new(path: PathBuf, items: Vec<File>) -> Self {
-        Self { items, path }
+    pub fn new(path: PathBuf, item: File, items: Vec<File>) -> Self {
+        Self { path, item, items }
     }
 
-    pub fn render(&self, area: Rect, frame: &mut Frame) -> () {
+    pub fn render(&self, area: Rect, frame: &mut Frame) {
         let header: Block = Block::new()
-            .title(Line::raw(self.path.to_string_lossy()).centered())
+            .title(Line::raw(self.path.to_str().unwrap()).centered())
             .borders(Borders::TOP)
             .border_set(symbols::border::EMPTY)
             .border_style(HEADER_STYLE);
 
-        let items: Vec<ListItem> = self.items.iter().map(|file| ListItem::from(file)).collect();
+        let items: Vec<ListItem> = self.items.iter().map(ListItem::from).collect();
 
         let current_dirs_list = List::new(items)
             .block(header)
@@ -56,5 +38,15 @@ impl PreviousDir {
             .highlight_spacing(HighlightSpacing::Always);
 
         frame.render_widget(current_dirs_list, area)
+    }
+
+    pub fn render_empty(area: Rect, root_dir_title: String, frame: &mut Frame) {
+        let header: Block = Block::new()
+            .title(Line::raw(root_dir_title))
+            .borders(Borders::TOP)
+            .border_set(symbols::border::EMPTY)
+            .border_style(HEADER_STYLE);
+
+        frame.render_widget(header, area)
     }
 }

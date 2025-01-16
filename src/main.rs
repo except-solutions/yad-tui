@@ -7,7 +7,6 @@ use ratatui::{
 };
 use std::io::{self, stdout};
 
-use yad_tui::events::handle_events;
 use yad_tui::meta_db::init_db;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
@@ -17,12 +16,13 @@ use yad_tui::{
     config::{get_real_config_path, get_toml_config},
     models::disk_meta::DiskMeta,
 };
+use yad_tui::{events::handle_events, utils::dir_reader::DirReader};
 
 use log::{debug, info};
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
-use yad_tui::fs::{read_dir, ReaderHOF, FS};
+use yad_tui::fs::FS;
 use yad_tui::models::model::{Model, Popup};
 
 #[macro_use]
@@ -37,7 +37,6 @@ fn init() -> Model {
     rust_i18n::set_locale(config.main.lang.as_str());
 
     let (meta_db, meta) = init_db(&config);
-    let fs = <FS as ReaderHOF>::from_path(&config.main.sync_dir_path, read_dir);
     let disk_client = DiskClient::from_app_conf(&config, &meta);
 
     let log_file = FileAppender::builder()
@@ -53,8 +52,14 @@ fn init() -> Model {
                 .build(config.main.log_level.to_level_filter()),
         )
         .unwrap();
-
     log4rs::init_config(log_config).unwrap();
+
+    let dir_reader = DirReader {
+        sync_dir_path: config.main.sync_dir_path.clone(),
+        disk_client: disk_client.clone(),
+    };
+
+    let fs = FS::create(dir_reader).unwrap();
 
     let top_bar = meta.api_token.clone().map(|_| {
         let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());

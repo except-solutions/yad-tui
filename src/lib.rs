@@ -2,6 +2,7 @@ pub mod cli;
 pub mod components;
 pub mod config;
 pub mod disk_client;
+pub mod error;
 pub mod events;
 pub mod fs;
 pub mod meta_db;

@@ -1,5 +1,7 @@
 use crate::{
-    components::{common::Widget, popups::login_ui::render_login_form},
+    components::{
+        common::Widget, main_screen::previous_dir::PreviousDir, popups::login_ui::render_login_form,
+    },
     config::get_text_config,
     models::model::{Model, Popup},
 };
@@ -30,7 +32,16 @@ pub fn ui(model: &mut Model, frame: &mut Frame) {
             top_bar_widget.render(frame, top_bar);
         };
 
-        model.fs.previous_dir.render(previous_dir_area, frame);
+        if let Some(ref previous_dir) = model.fs.previous_dir {
+            previous_dir.render(previous_dir_area, frame);
+        } else {
+            PreviousDir::render_empty(
+                previous_dir_area,
+                model.config.main.sync_dir_path.clone(),
+                frame,
+            );
+        }
+
         model.fs.current_dir.render(current_dir_area, frame);
 
         if let Some(ref mut next_dir) = model.fs.next_dir {
