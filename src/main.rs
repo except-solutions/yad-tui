@@ -6,10 +6,16 @@ use ratatui::{
     prelude::*,
 };
 use std::io::{self, stdout};
+use std::sync::mpsc;
 
-use yad_tui::meta_db::init_db;
 use yad_tui::ui::ui;
 use yad_tui::update::update;
+use yad_tui::{
+    channels::{Channel, Channels, ReadNextDirChannel},
+    components::main_screen::next_dir::NextDir,
+    error::AppError,
+    meta_db::init_db,
+};
 use yad_tui::{cli::parse_args, disk_client::DiskClient};
 use yad_tui::{
     components::main_screen::top_bar::TopBar,
@@ -30,7 +36,7 @@ extern crate rust_i18n;
 
 i18n!("locales");
 
-fn init() -> Model {
+fn init() -> (Model, Channels) {
     let args = parse_args();
     let config = get_toml_config(&args.conf);
 
@@ -38,7 +44,6 @@ fn init() -> Model {
 
     let (meta_db, meta) = init_db(&config);
     let disk_client = DiskClient::from_app_conf(&config, &meta);
-
     let log_file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} [{l}] - {m}{n}")))
         .build(format!("{}log/app.log", config.main.cache_dir_path))
@@ -59,33 +64,46 @@ fn init() -> Model {
         disk_client: disk_client.clone(),
     };
 
-    let fs = FS::create(dir_reader).unwrap();
-
     let top_bar = meta.api_token.clone().map(|_| {
         let disk_meta = DiskMeta::from(disk_client.disk_meta().unwrap());
         TopBar { disk_meta }
     });
 
-    Model {
-        top_bar,
-        fs,
-        config,
-        popup: if meta.api_token.is_some() {
-            None
-        } else {
-            Some(Popup::LoginForm {
-                code_input: "".to_string(),
-                error_message: None,
-            })
+    let (fs_sender, fs_receiver) = mpsc::channel::<Result<Option<NextDir>, AppError>>();
+
+    let ch = ReadNextDirChannel {
+        sender: fs_sender,
+        receiver: fs_receiver,
+    };
+    let channels = Channels {
+        read_next_dir_ch: ch,
+    };
+
+    let fs = FS::create(dir_reader).unwrap();
+
+    (
+        Model {
+            top_bar,
+            fs,
+            config,
+            popup: if meta.api_token.is_some() {
+                None
+            } else {
+                Some(Popup::LoginForm {
+                    code_input: "".to_string(),
+                    error_message: None,
+                })
+            },
+            config_path: get_real_config_path(&args.conf),
+            meta_db,
+            disk_client,
         },
-        config_path: get_real_config_path(&args.conf),
-        meta_db,
-        disk_client,
-    }
+        channels,
+    )
 }
 
 fn main() -> io::Result<()> {
-    let mut model = init();
+    let (mut model, channels) = init();
     info!("Start application");
     info!("Initialize application model");
     debug!("Initializated model: {:?}", model);
@@ -98,9 +116,11 @@ fn main() -> io::Result<()> {
     while current_message.is_some() {
         terminal.draw(|f| ui(&mut model, f))?;
         current_message = match handle_events(&model)? {
-            Some(m) => update(&mut model, m),
+            Some(m) => update(&mut model, m, &channels),
             None => None,
         };
+
+        let _ = &channels.read_next_dir_ch.handle(&mut model);
     }
 
     disable_raw_mode()?;

@@ -5,6 +5,11 @@ use crate::models::file::{File, NodeType};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
 use std::path::PathBuf;
+use std::sync::mpsc::Sender;
+use std::thread;
+
+type NextDirSetResult = Result<Option<NextDir>, AppError>;
+type FSSender = Sender<NextDirSetResult>;
 
 #[derive(Debug, Clone)]
 pub struct FS {
@@ -53,14 +58,31 @@ impl FS {
         }
     }
 
-    pub fn select_next_element_for_next_dir(&mut self) -> Result<(), AppError> {
+    pub fn select_next_element_for_next_dir(&mut self, sender: FSSender) -> Result<(), AppError> {
         self.current_dir.state.select_next();
-        self.set_next_dir_from_current()
+
+        let c = self.clone();
+
+        thread::spawn(move || {
+            let _ = sender.send(c.set_next_dir_from_current());
+        });
+
+        Ok(())
     }
 
-    pub fn select_previous_element_for_next_dir(&mut self) -> Result<(), AppError> {
+    pub fn select_previous_element_for_next_dir(
+        &mut self,
+        sender: FSSender,
+    ) -> Result<(), AppError> {
         self.current_dir.state.select_previous();
-        self.set_next_dir_from_current()
+
+        let c = self.clone();
+
+        thread::spawn(move || {
+            let _ = sender.send(c.set_next_dir_from_current());
+        });
+
+        Ok(())
     }
 
     pub fn open_selected(&mut self) -> Result<(), AppError> {
@@ -77,8 +99,11 @@ impl FS {
             let (item, items) = self
                 .dir_reader
                 .read_dir(path_buf_to_string(path.clone())?)?;
-            self.current_dir = CurrentDir::new(path.clone(), item, items);
-            self.set_next_dir_from_current()?;
+            self.current_dir = CurrentDir::new(path.clone(), item, items.clone());
+
+            if !items.is_empty() {
+                self.set_next_dir_from_current()?;
+            }
         }
 
         Ok(())
@@ -107,20 +132,20 @@ impl FS {
         Ok(())
     }
 
-    fn set_next_dir_from_current(&mut self) -> Result<(), AppError> {
+    fn set_next_dir_from_current(&self) -> NextDirSetResult {
         let selected = self.current_dir.selected_file()?;
 
-        if selected.file_type == NodeType::Dir {
+        let next_dir = if selected.file_type == NodeType::Dir {
             let mut next_path_buf = PathBuf::new();
             next_path_buf.push(&self.current_dir.path);
             next_path_buf.push(&selected.name);
             let (item, items) = self
                 .dir_reader
                 .read_dir(path_buf_to_string(next_path_buf.clone())?)?;
-            self.next_dir = Some(NextDir::new(next_path_buf, item, items));
+            Some(NextDir::new(next_path_buf, item, items))
         } else {
-            self.next_dir = None
-        }
-        Ok(())
+            None
+        };
+        Ok(next_dir)
     }
 }

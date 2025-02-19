@@ -1,3 +1,4 @@
+pub mod channels;
 pub mod cli;
 pub mod components;
 pub mod config;

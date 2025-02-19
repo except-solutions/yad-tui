@@ -1,3 +1,4 @@
+use crate::channels::Channels;
 use crate::models::model::{Model, Popup};
 use crate::update::Message::{Continue, Exit, MoveDown, MoveUp, ShowConfig};
 use crate::updaters::login_form::{remove_last_symbol, send_form, update_input};
@@ -22,14 +23,20 @@ pub enum Message {
     InputModeAction(InputAction),
 }
 
-pub fn update(model: &mut Model, msg: Message) -> Option<Message> {
+pub fn update(model: &mut Model, msg: Message, channels: &Channels) -> Option<Message> {
     match (msg, model.popup.clone()) {
         (MoveDown, None) => {
-            model.fs.select_next_element_for_next_dir().unwrap();
+            model
+                .fs
+                .select_next_element_for_next_dir(channels.read_next_dir_ch.sender.clone())
+                .unwrap();
             Some(Continue)
         }
         (MoveUp, None) => {
-            model.fs.select_previous_element_for_next_dir().unwrap();
+            model
+                .fs
+                .select_previous_element_for_next_dir(channels.read_next_dir_ch.sender.clone())
+                .unwrap();
             Some(Continue)
         }
         (ShowConfig, None) => {
