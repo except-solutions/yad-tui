@@ -5,10 +5,8 @@ use ratatui::{
     },
     prelude::*,
 };
+use std::io::{self, stdout};
 use std::sync::mpsc;
-use std::{
-    io::{self, stdout},
-};
 
 use yad_tui::ui::ui;
 use yad_tui::update::update;
@@ -129,4 +127,3 @@ fn main() -> io::Result<()> {
     stdout().execute(LeaveAlternateScreen)?;
     Ok(())
 }
-
