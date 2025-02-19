@@ -1,3 +1,4 @@
+pub mod channels;
 pub mod cli;
 pub mod components;
 pub mod config;
@@ -11,7 +12,6 @@ pub mod ui;
 pub mod update;
 pub mod updaters;
 pub mod utils;
-pub mod channels;
 
 #[macro_use]
 extern crate rust_i18n;

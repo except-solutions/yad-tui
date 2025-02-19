@@ -54,7 +54,8 @@ impl CurrentDir {
             .selected()
             .ok_or(AppError::MissingSelectedElelement)?;
 
-        let file = self.items
+        let file = self
+            .items
             .get(list_item_state)
             .cloned()
             .ok_or(AppError::MissingSelectedElelement);

@@ -1,4 +1,3 @@
-use crate::channels::ReadNextDirChannel;
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::error::AppError;
@@ -50,7 +49,6 @@ impl FS {
         current_dir: CurrentDir,
         next_dir: Option<NextDir>,
         dir_reader: DirReader,
-
     ) -> Self {
         Self {
             next_dir,
@@ -60,10 +58,7 @@ impl FS {
         }
     }
 
-    pub fn select_next_element_for_next_dir(
-        &mut self, 
-        sender: FSSender
-) -> Result<(), AppError> {
+    pub fn select_next_element_for_next_dir(&mut self, sender: FSSender) -> Result<(), AppError> {
         self.current_dir.state.select_next();
 
         let c = self.clone();
@@ -75,21 +70,22 @@ impl FS {
         Ok(())
     }
 
-    pub fn select_previous_element_for_next_dir(&mut self, sender: FSSender) -> Result<(), AppError> {
+    pub fn select_previous_element_for_next_dir(
+        &mut self,
+        sender: FSSender,
+    ) -> Result<(), AppError> {
         self.current_dir.state.select_previous();
 
         let c = self.clone();
 
         thread::spawn(move || {
-            let _ = sender.send(c.set_next_dir_from_current()
-);
+            let _ = sender.send(c.set_next_dir_from_current());
         });
 
         Ok(())
     }
 
     pub fn open_selected(&mut self) -> Result<(), AppError> {
-
         let selected = &self.current_dir.selected_file()?;
 
         if selected.is_dir() {

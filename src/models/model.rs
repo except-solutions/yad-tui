@@ -1,4 +1,3 @@
-use crate::channels::Channels;
 use crate::components::main_screen::top_bar::TopBar;
 use crate::fs::FS;
 use crate::{config::Config, disk_client::DiskClient};
@@ -22,7 +21,6 @@ pub struct Model {
     pub config_path: PathBuf,
     pub meta_db: DB,
     pub disk_client: DiskClient,
-    pub channels: Channels
 }
 
 impl fmt::Debug for Model {
