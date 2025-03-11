@@ -20,9 +20,9 @@ impl Channel for ReadNextDirChannel {
     fn handle(&self, model: &mut Model) {
         let result = &self.receiver.try_recv();
         if let Ok(Ok(next_dir)) = result {
-            let selected = model.fs.current_dir.selected_file().unwrap();
+            let selected = model.fs.current_dir.selected_file();
 
-            if let Some(n_dir) = &next_dir {
+            if let (Some(n_dir), Ok(selected)) = (&next_dir, selected) {
                 if n_dir.item.name == selected.name {
                     model.fs.next_dir = next_dir.clone()
                 };

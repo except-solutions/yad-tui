@@ -60,6 +60,7 @@ impl FS {
 
     pub fn select_next_element_for_next_dir(&mut self, sender: FSSender) -> Result<(), AppError> {
         self.current_dir.state.select_next();
+        self.next_dir = None;
 
         let c = self.clone();
 
@@ -75,6 +76,7 @@ impl FS {
         sender: FSSender,
     ) -> Result<(), AppError> {
         self.current_dir.state.select_previous();
+        self.next_dir = None;
 
         let c = self.clone();
 
@@ -100,10 +102,11 @@ impl FS {
                 .dir_reader
                 .read_dir(path_buf_to_string(path.clone())?)?;
             self.current_dir = CurrentDir::new(path.clone(), item, items.clone());
+            self.next_dir = None;
 
             if !items.is_empty() {
                 self.set_next_dir_from_current()?;
-            }
+            };
         }
 
         Ok(())
