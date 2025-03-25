@@ -93,6 +93,14 @@ pub enum DiskError {
     EmptyToken,
 }
 
+#[derive(Deserialize)]
+pub struct DownloadHref {
+    pub href: String,
+    pub method: String,
+    pub templated: bool
+}
+
+
 impl DiskError {
     pub fn unknown_default() -> Self {
         Self::UnknownServer(t!("disk.errors.unknown").to_string())
@@ -231,6 +239,13 @@ impl DiskClient {
         Ok(request.set("Authorization", &format!("OAuth {token}", token = token)))
     }
 
+    fn download_file(&self, cloud_path: String, local_path: String) -> Result<(), DiskError> {
+       let response = self.prepare_request(|| ureq::get(format!("{}/resources/download?path={}", self.api_url, cloud_path).as_str()))?.call();
+       let download_link = self.match_response::<DownloadHref>(response)?;
+        
+       Ok(())
+    }
+
     fn match_response<T: DeserializeOwned>(
         &self,
         response: Result<ureq::Response, HTTPError>,
@@ -263,3 +278,4 @@ impl DiskClient {
         }
     }
 }
+

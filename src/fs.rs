@@ -151,4 +151,8 @@ impl FS {
         };
         Ok(next_dir)
     }
+
+    fn download_selected(&self) {
+
+    }
 }
