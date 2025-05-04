@@ -1,7 +1,6 @@
 use crate::models::model::Model;
 use crate::update::InputAction::*;
-use crate::update::Message;
-use crate::update::Message::*;
+use crate::update::Message; use crate::update::Message::*;
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::KeyCode;
 use ratatui::crossterm::event::{Event, KeyEventKind};
@@ -29,6 +28,7 @@ pub fn handle_events(model: &Model) -> io::Result<Option<Message>> {
                         Char('c') => Some(ShowConfig),
                         Char('l') | Enter => Some(EnterSelectedDir),
                         Char('h') | Backspace => Some(EnterPrevDir),
+                        Char('d') => Some(DownloadFile),
                         _ => Some(Continue),
                     }
                 };

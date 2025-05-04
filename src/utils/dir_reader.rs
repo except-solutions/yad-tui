@@ -18,7 +18,6 @@ pub struct DirReader {
     pub sync_dir_path: String,
     pub disk_client: DiskClient,
 }
-
 impl DirReader {
     pub fn read_dir(&self, path: String) -> Result<(File, Vec<File>), AppError> {
         let path_buf = PathBuf::from(self.sync_dir_path.clone() + "/" + path.as_str());
@@ -47,7 +46,7 @@ impl DirReader {
                 name: read_f_name(path.clone())?,
                 file_type: NodeType::Dir,
                 state,
-                cloud: cloud_root_dir.map(|_cd| CloudFile {}),
+                cloud: cloud_root_dir.map(|cd| CloudFile { path: cd.path }),
                 local: if local_dir_exists {
                     Some(LocalFile { path: path_buf })
                 } else {
@@ -71,7 +70,7 @@ impl DirReader {
                         } else {
                             NodeType::File
                         },
-                        cloud: Some(CloudFile {}),
+                        cloud: Some(CloudFile { path: item.path }),
                         local: None,
                         state: State::Cloud,
                     })
@@ -105,7 +104,7 @@ impl DirReader {
                         let f_name = e.file_name().into_string().unwrap();
                         let f_type = e.file_type()?;
                         // TODO fill
-                        let cloud = cloud_dir.get(&f_name).map(|_cloud_item| CloudFile {});
+                        let cloud = cloud_dir.get(&f_name).map(|cloud_item| CloudFile { path: cloud_item.path.clone() });
                         let local = LocalFile { path: e.path() };
                         let node_type = if f_type.is_file() {
                             NodeType::File
@@ -153,7 +152,7 @@ impl DirReader {
                     NodeType::File
                 },
                 state: State::Cloud,
-                cloud: Some(CloudFile {}),
+                cloud: Some(CloudFile { path: di.path }),
                 local: None,
             })
             .collect::<Vec<File>>();

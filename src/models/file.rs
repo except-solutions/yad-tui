@@ -28,7 +28,9 @@ impl State {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct CloudFile {}
+pub struct CloudFile {
+    pub path: String
+}
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct LocalFile {

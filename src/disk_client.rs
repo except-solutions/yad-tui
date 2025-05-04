@@ -1,11 +1,12 @@
-use std::{collections::HashMap, fmt};
-
+use std::{collections::HashMap, fmt, fs::File, io::Write};
+use std::{collections::HashMap, fmt, fs::File, io::Write};
 use crate::{config::Config, meta_db::Meta};
 use base64::prelude::*;
 use log;
 use rust_i18n::t;
 use serde::{de::DeserializeOwned, Deserialize};
 use ureq::{Error as HTTPError, Request};
+use std::io::Read;
 
 #[derive(Deserialize)]
 enum AuthResponse {
@@ -200,7 +201,7 @@ impl DiskClient {
 
     pub fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
         let response = self.prepare_request(|| ureq::get(&self.api_url))?.call();
-        self.match_response::<DiskMetaResponse>(response)
+        self.match_response::<DiskMetaResponse>(response, into_json)
     }
 
     pub fn item(
@@ -227,31 +228,41 @@ impl DiskClient {
                 )
             })?
             .call();
-        self.match_response::<ItemResponse>(response)
+        self.match_response::<ItemResponse>(response, into_json)
     }
 
     fn prepare_request(&self, request_f: impl Fn() -> Request) -> Result<Request, DiskError> {
         self.set_api_token(request_f())
     }
-
+    
     fn set_api_token(&self, request: Request) -> Result<Request, DiskError> {
         let token = self.token.clone().ok_or(DiskError::EmptyToken)?;
         Ok(request.set("Authorization", &format!("OAuth {token}", token = token)))
     }
 
-    fn download_file(&self, cloud_path: String, local_path: String) -> Result<(), DiskError> {
-       let response = self.prepare_request(|| ureq::get(format!("{}/resources/download?path={}", self.api_url, cloud_path).as_str()))?.call();
-       let download_link = self.match_response::<DownloadHref>(response)?;
-        
-       Ok(())
+    pub fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError> {
+       let fetch_download_link_response = self
+           .prepare_request(|| ureq::get(format!("{}/resources/download?path={}", self.api_url, cloud_path).as_str()))?
+           .call();
+
+       let download_link = self.match_response::<DownloadHref>(fetch_download_link_response, into_json)?;
+       let remote_file_response = self.prepare_request(|| ureq::get(&download_link.href))?
+           .call();
+
+       let remote_file_reader = self.match_response(remote_file_response, |r| r.into_reader())?;
+       // let mut result_file = File::create(local_path).unwrap();
+
+       // std::io::copy(&mut remote_file_reader, &mut result_file).unwrap();
+       Ok(remote_file_reader)
     }
 
-    fn match_response<T: DeserializeOwned>(
+    fn match_response<T>(
         &self,
         response: Result<ureq::Response, HTTPError>,
+        response_handler: impl Fn(ureq::Response) -> T,
     ) -> Result<T, DiskError> {
         match response {
-            Ok(response_body) => Ok(response_body.into_json::<T>().unwrap()),
+            Ok(response_body) => Ok(response_handler(response_body)),
             Err(HTTPError::Status(401, response_err)) => {
                 log::error!(
                     "Unauthorized response exception: {:?}",
@@ -269,7 +280,7 @@ impl DiskClient {
                     code,
                     response_err.into_string()
                 );
-                Err(DiskError::unknown_default())
+             Err(DiskError::unknown_default())
             }
             Err(response_error) => {
                 log::error!("Unexpected response error: {:?}", response_error);
@@ -277,5 +288,9 @@ impl DiskClient {
             }
         }
     }
+}
+
+fn into_json<T: DeserializeOwned>(response: ureq::Response) -> T {
+    response.into_json::<T>().unwrap()
 }
 

@@ -7,6 +7,7 @@ use crate::utils::dir_reader::DirReader;
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
 use std::thread;
+use std::fs;
 
 type NextDirSetResult = Result<Option<NextDir>, AppError>;
 type FSSender = Sender<NextDirSetResult>;
@@ -145,14 +146,34 @@ impl FS {
             let (item, items) = self
                 .dir_reader
                 .read_dir(path_buf_to_string(next_path_buf.clone())?)?;
-            Some(NextDir::new(next_path_buf, item, items))
+Some(NextDir::new(next_path_buf, item, items))
         } else {
             None
         };
         Ok(next_dir)
     }
 
-    fn download_selected(&self) {
+    pub fn download_selected(&self) -> Result<(), AppError> {
+        let selected = self.current_dir.selected_file()?;
 
+
+        let p = format!("{}/{}", String::from("/Users/honey/dev/yad-tui"), selected.name);
+
+        if let Some(cloud_file) = selected.cloud {
+
+            let mut disk_file_reader = self
+                .dir_reader
+                .disk_client
+                .file_reader(
+                    cloud_file.path.clone(), 
+                ).map_err(AppError::DiskErrors)?;
+
+            let mut result_file = fs::File::create(p).map_err(AppError::FSErrors)?;
+
+            std::io::copy(&mut disk_file_reader, &mut result_file).map_err(AppError::FSErrors)?;
+
+        };
+
+        Ok(())
     }
 }
