@@ -1,12 +1,12 @@
 use std::{collections::HashMap, fmt, fs::File, io::Write};
-use std::{collections::HashMap, fmt, fs::File, io::Write};
-use crate::{config::Config, meta_db::Meta};
 use base64::prelude::*;
 use log;
 use rust_i18n::t;
 use serde::{de::DeserializeOwned, Deserialize};
 use ureq::{Error as HTTPError, Request};
 use std::io::Read;
+
+use crate::{config::Config, meta_db::Meta};
 
 #[derive(Deserialize)]
 enum AuthResponse {

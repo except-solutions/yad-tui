@@ -4,6 +4,7 @@ use crate::error::AppError;
 use crate::models::file::{File, NodeType};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
+use crate::utils::progress_file_reader::ProgressFileReader;
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
 use std::thread;
@@ -138,8 +139,7 @@ impl FS {
 
     fn set_next_dir_from_current(&self) -> NextDirSetResult {
         let selected = self.current_dir.selected_file()?;
-
-        let next_dir = if selected.file_type == NodeType::Dir {
+let next_dir = if selected.file_type == NodeType::Dir {
             let mut next_path_buf = PathBuf::new();
             next_path_buf.push(&self.current_dir.path);
             next_path_buf.push(&selected.name);
@@ -157,7 +157,7 @@ Some(NextDir::new(next_path_buf, item, items))
         let selected = self.current_dir.selected_file()?;
 
 
-        let p = format!("{}/{}", String::from("/Users/honey/dev/yad-tui"), selected.name);
+        let p = format!("{}/{}", String::from("/home/honey/dev"), selected.name);
 
         if let Some(cloud_file) = selected.cloud {
 
@@ -168,12 +168,15 @@ Some(NextDir::new(next_path_buf, item, items))
                     cloud_file.path.clone(), 
                 ).map_err(AppError::DiskErrors)?;
 
+            let mut wrapper = ProgressFileReader { bytes_readed: 0, it: disk_file_reader };
+
             let mut result_file = fs::File::create(p).map_err(AppError::FSErrors)?;
 
-            std::io::copy(&mut disk_file_reader, &mut result_file).map_err(AppError::FSErrors)?;
-
+            std::io::copy(&mut wrapper, &mut result_file).map_err(AppError::FSErrors)?;
+            let y = "";
         };
 
         Ok(())
     }
 }
+
