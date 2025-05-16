@@ -21,7 +21,7 @@ pub enum Message {
     EnterSelectedDir,
     EnterPrevDir,
     InputModeAction(InputAction),
-    DownloadFile
+    DownloadFile,
 }
 
 pub fn update(model: &mut Model, msg: Message, channels: &Channels) -> Option<Message> {
@@ -83,7 +83,10 @@ pub fn update(model: &mut Model, msg: Message, channels: &Channels) -> Option<Me
             Some(Continue)
         }
         (Message::DownloadFile, _) => {
-            model.fs.download_selected();
+            model
+                .fs
+                .download_selected(channels.download_file_channel.sender.clone())
+                .unwrap();
             Some(Continue)
         }
         (_, _) => Some(Continue),

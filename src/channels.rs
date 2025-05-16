@@ -4,6 +4,7 @@ use crate::{components::main_screen::next_dir::NextDir, error::AppError, models:
 
 pub struct Channels {
     pub read_next_dir_ch: ReadNextDirChannel,
+    pub download_file_channel: DownloadFileChannel,
 }
 
 #[derive(Debug)]
@@ -27,6 +28,21 @@ impl Channel for ReadNextDirChannel {
                     model.fs.next_dir = next_dir.clone()
                 };
             };
+        };
+    }
+}
+
+#[derive(Debug)]
+pub struct DownloadFileChannel {
+    pub sender: Sender<usize>,
+    pub receiver: Receiver<usize>,
+}
+
+impl Channel for DownloadFileChannel {
+    fn handle(&self, _: &mut Model) {
+        if let Ok(bytes) = &self.receiver.try_recv() {
+            // TODO: Add downloaded bytes in model
+            // bytes.clone();
         };
     }
 }

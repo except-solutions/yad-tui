@@ -1,6 +1,7 @@
 use crate::models::model::Model;
 use crate::update::InputAction::*;
-use crate::update::Message; use crate::update::Message::*;
+use crate::update::Message;
+use crate::update::Message::*;
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::KeyCode;
 use ratatui::crossterm::event::{Event, KeyEventKind};

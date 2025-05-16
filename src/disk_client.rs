@@ -1,10 +1,10 @@
-use std::{collections::HashMap, fmt, fs::File, io::Write};
 use base64::prelude::*;
 use log;
 use rust_i18n::t;
 use serde::{de::DeserializeOwned, Deserialize};
-use ureq::{Error as HTTPError, Request};
 use std::io::Read;
+use std::{collections::HashMap, fmt, fs::File, io::Write};
+use ureq::{Error as HTTPError, Request};
 
 use crate::{config::Config, meta_db::Meta};
 
@@ -98,9 +98,8 @@ pub enum DiskError {
 pub struct DownloadHref {
     pub href: String,
     pub method: String,
-    pub templated: bool
+    pub templated: bool,
 }
-
 
 impl DiskError {
     pub fn unknown_default() -> Self {
@@ -234,26 +233,35 @@ impl DiskClient {
     fn prepare_request(&self, request_f: impl Fn() -> Request) -> Result<Request, DiskError> {
         self.set_api_token(request_f())
     }
-    
+
     fn set_api_token(&self, request: Request) -> Result<Request, DiskError> {
         let token = self.token.clone().ok_or(DiskError::EmptyToken)?;
         Ok(request.set("Authorization", &format!("OAuth {token}", token = token)))
     }
 
-    pub fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError> {
-       let fetch_download_link_response = self
-           .prepare_request(|| ureq::get(format!("{}/resources/download?path={}", self.api_url, cloud_path).as_str()))?
-           .call();
+    pub fn file_reader(
+        &self,
+        cloud_path: String,
+    ) -> Result<Box<dyn Read + Send + Sync>, DiskError> {
+        let fetch_download_link_response = self
+            .prepare_request(|| {
+                ureq::get(
+                    format!("{}/resources/download?path={}", self.api_url, cloud_path).as_str(),
+                )
+            })?
+            .call();
 
-       let download_link = self.match_response::<DownloadHref>(fetch_download_link_response, into_json)?;
-       let remote_file_response = self.prepare_request(|| ureq::get(&download_link.href))?
-           .call();
+        let download_link =
+            self.match_response::<DownloadHref>(fetch_download_link_response, into_json)?;
+        let remote_file_response = self
+            .prepare_request(|| ureq::get(&download_link.href))?
+            .call();
 
-       let remote_file_reader = self.match_response(remote_file_response, |r| r.into_reader())?;
-       // let mut result_file = File::create(local_path).unwrap();
+        let remote_file_reader = self.match_response(remote_file_response, |r| r.into_reader())?;
+        // let mut result_file = File::create(local_path).unwrap();
 
-       // std::io::copy(&mut remote_file_reader, &mut result_file).unwrap();
-       Ok(remote_file_reader)
+        // std::io::copy(&mut remote_file_reader, &mut result_file).unwrap();
+        Ok(remote_file_reader)
     }
 
     fn match_response<T>(
@@ -280,7 +288,7 @@ impl DiskClient {
                     code,
                     response_err.into_string()
                 );
-             Err(DiskError::unknown_default())
+                Err(DiskError::unknown_default())
             }
             Err(response_error) => {
                 log::error!("Unexpected response error: {:?}", response_error);
@@ -293,4 +301,3 @@ impl DiskClient {
 fn into_json<T: DeserializeOwned>(response: ureq::Response) -> T {
     response.into_json::<T>().unwrap()
 }
-

@@ -29,7 +29,7 @@ impl State {
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct CloudFile {
-    pub path: String
+    pub path: String,
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]

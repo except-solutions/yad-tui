@@ -8,8 +8,8 @@ use ratatui::{
 use std::io::{self, stdout};
 use std::sync::mpsc;
 
-use yad_tui::ui::ui;
 use yad_tui::update::update;
+use yad_tui::{channels::DownloadFileChannel, ui::ui};
 use yad_tui::{
     channels::{Channel, Channels, ReadNextDirChannel},
     components::main_screen::next_dir::NextDir,
@@ -75,8 +75,17 @@ fn init() -> (Model, Channels) {
         sender: fs_sender,
         receiver: fs_receiver,
     };
+
+    let (download_file_sender, download_file_receiver) = mpsc::channel::<usize>();
+
+    let download_file_channel = DownloadFileChannel {
+        sender: download_file_sender,
+        receiver: download_file_receiver,
+    };
+
     let channels = Channels {
         read_next_dir_ch: ch,
+        download_file_channel,
     };
 
     let fs = FS::create(dir_reader).unwrap();
@@ -121,6 +130,12 @@ fn main() -> io::Result<()> {
         };
 
         let _ = &channels.read_next_dir_ch.handle(&mut model);
+
+        let result = channels.download_file_channel.receiver.try_recv();
+
+        if let Ok(value) = result {
+            println!("{}", value);
+        }
     }
 
     disable_raw_mode()?;

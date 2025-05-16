@@ -104,7 +104,9 @@ impl DirReader {
                         let f_name = e.file_name().into_string().unwrap();
                         let f_type = e.file_type()?;
                         // TODO fill
-                        let cloud = cloud_dir.get(&f_name).map(|cloud_item| CloudFile { path: cloud_item.path.clone() });
+                        let cloud = cloud_dir.get(&f_name).map(|cloud_item| CloudFile {
+                            path: cloud_item.path.clone(),
+                        });
                         let local = LocalFile { path: e.path() };
                         let node_type = if f_type.is_file() {
                             NodeType::File

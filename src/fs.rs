@@ -5,10 +5,10 @@ use crate::models::file::{File, NodeType};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
 use crate::utils::progress_file_reader::ProgressFileReader;
+use std::fs;
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
 use std::thread;
-use std::fs;
 
 type NextDirSetResult = Result<Option<NextDir>, AppError>;
 type FSSender = Sender<NextDirSetResult>;
@@ -139,44 +139,50 @@ impl FS {
 
     fn set_next_dir_from_current(&self) -> NextDirSetResult {
         let selected = self.current_dir.selected_file()?;
-let next_dir = if selected.file_type == NodeType::Dir {
+        let next_dir = if selected.file_type == NodeType::Dir {
             let mut next_path_buf = PathBuf::new();
             next_path_buf.push(&self.current_dir.path);
             next_path_buf.push(&selected.name);
             let (item, items) = self
                 .dir_reader
                 .read_dir(path_buf_to_string(next_path_buf.clone())?)?;
-Some(NextDir::new(next_path_buf, item, items))
+            Some(NextDir::new(next_path_buf, item, items))
         } else {
             None
         };
         Ok(next_dir)
     }
 
-    pub fn download_selected(&self) -> Result<(), AppError> {
+    pub fn download_selected(&self, sender: Sender<usize>) -> Result<(), AppError> {
         let selected = self.current_dir.selected_file()?;
 
-
-        let p = format!("{}/{}", String::from("/home/honey/dev"), selected.name);
-
         if let Some(cloud_file) = selected.cloud {
+            let target_local_path = format!(
+                "{}/{}",
+                path_buf_to_string(self.current_dir.path.clone())?,
+                selected.name
+            );
+            // TODO implement unpacking for dirs
+            let disk_client = self.dir_reader.disk_client.clone();
 
-            let mut disk_file_reader = self
-                .dir_reader
-                .disk_client
-                .file_reader(
-                    cloud_file.path.clone(), 
-                ).map_err(AppError::DiskErrors)?;
+            thread::spawn(move || {
+                let disk_file_reader = disk_client
+                    .file_reader(cloud_file.path.clone())
+                    .map_err(AppError::DiskErrors)?;
 
-            let mut wrapper = ProgressFileReader { bytes_readed: 0, it: disk_file_reader };
+                let mut wrapper = ProgressFileReader {
+                    bytes_readed: 0,
+                    it: disk_file_reader,
+                    sender,
+                };
 
-            let mut result_file = fs::File::create(p).map_err(AppError::FSErrors)?;
+                let mut result_file =
+                    fs::File::create(target_local_path).map_err(AppError::FSErrors)?;
 
-            std::io::copy(&mut wrapper, &mut result_file).map_err(AppError::FSErrors)?;
-            let y = "";
+                std::io::copy(&mut wrapper, &mut result_file).map_err(AppError::FSErrors)
+            });
         };
 
         Ok(())
     }
 }
-
