@@ -5,7 +5,7 @@ use ratatui::{
     },
     prelude::*,
 };
-use std::io::{self, stdout};
+use std::{fs, io::{self, stdout}};
 use std::sync::mpsc;
 
 use yad_tui::update::update;
@@ -59,6 +59,8 @@ fn init() -> (Model, Channels) {
         .unwrap();
     log4rs::init_config(log_config).unwrap();
 
+    fs::create_dir_all(format!("{}/tmp", config.main.cache_dir_path)).unwrap();
+
     let dir_reader = DirReader {
         sync_dir_path: config.main.sync_dir_path.clone(),
         disk_client: disk_client.clone(),
@@ -88,7 +90,7 @@ fn init() -> (Model, Channels) {
         download_file_channel,
     };
 
-    let fs = FS::create(dir_reader).unwrap();
+    let fs = FS::create(config.main.cache_dir_path.clone(), dir_reader).unwrap();
 
     (
         Model {
