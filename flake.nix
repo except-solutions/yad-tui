@@ -49,8 +49,10 @@
             pkgs.gcc
             pkgs.lldb
             pkgs.vscode-extensions.vadimcn.vscode-lldb
+            pkgs.vscode-extensions.vadimcn.vscode-lldb
             pkgs.rustup
-            config.process-compose.cargo-doc-live.outputs.package
+            pkgs.lldb_17
+#            config.process-compose.cargo-doc-live.outputs.package
           ];
         };
         packages.default = self'.packages.rust-nix-template;

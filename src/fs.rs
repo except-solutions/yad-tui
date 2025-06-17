@@ -1,11 +1,11 @@
-use crate::components::main_screen::next_dir::NextDir;
-use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
+use crate::components::main_screen::next_dir::NextDir; use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::error::AppError;
 use crate::models::file::{CloudFile, File, NodeType};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
 use crate::utils::progress_file_reader::ProgressFileReader;
 use std::fs;
+use std::io::Cursor;
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
 use std::thread;
@@ -17,11 +17,11 @@ type FSSender = Sender<NextDirSetResult>;
 
 #[derive(Debug, Clone)]
 pub struct FS {
-    cache_dir_path: String,
     pub previous_dir: Option<PreviousDir>,
     pub current_dir: CurrentDir,
     pub next_dir: Option<NextDir>,
     pub dir_reader: DirReader,
+    cache_dir_path: String,
 }
 
 impl FS {
@@ -172,10 +172,10 @@ impl FS {
                 NodeType::File => selected.name,
                 NodeType::Dir  => format!("{}.zip", selected.name)
             };
-            // TODO: Implement unpacking
             let temp_full_path = format!("{}/{}", temp_dir_path, temp_file_name);
             fs::create_dir_all(temp_dir_path).unwrap();
             let disk_client = self.dir_reader.disk_client.clone();
+            let sync_dir = self.dir_reader.sync_dir_path.clone();
 
             thread::spawn(move || {
                 let disk_file_reader = disk_client
@@ -189,9 +189,24 @@ impl FS {
                 };
 
                 let mut temp_file =
-                    fs::File::create(temp_full_path).map_err(AppError::FSErrors)?;
+                    fs::File::create(temp_full_path.clone()).map_err(AppError::FSErrors)?;
 
-                std::io::copy(&mut wrapper, &mut temp_file).map_err(AppError::FSErrors)
+                std::io::copy(&mut wrapper, &mut temp_file).map_err(AppError::FSErrors)?;
+
+
+                if let NodeType::Dir = selected.file_type {
+
+                    println!("Unpack!");
+                    let mut dir_zipped_archive = fs::File::open(temp_full_path.clone()).map_err(AppError::FSErrors)?;
+                    let local_path = format!("{}{}", sync_dir, &cloud_file.path[5..]);
+
+
+                    zip_extract::extract(Cursor::new(dir_zipped_archive).get_ref(), &PathBuf::from(local_path), true);
+        
+                };
+                
+                Result::<(), AppError>::Ok(())
+
             });
         };
 
