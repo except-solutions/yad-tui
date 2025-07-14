@@ -1,31 +1,33 @@
-use crate::components::main_screen::next_dir::NextDir; use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
+use crate::components::main_screen::next_dir::NextDir;
+use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
+use crate::config::Config;
 use crate::error::AppError;
-use crate::models::file::{CloudFile, File, NodeType};
+use crate::models::file::{CloudFile, File, NodeType, State};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
+use crate::utils::file_downloader::FileDownloader;
 use crate::utils::progress_file_reader::ProgressFileReader;
 use std::fs;
 use std::io::Cursor;
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
+use std::sync::Arc;
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 use log;
 
 type NextDirSetResult = Result<Option<NextDir>, AppError>;
 type FSSender = Sender<NextDirSetResult>;
-
-#[derive(Debug, Clone)]
-pub struct FS {
-    pub previous_dir: Option<PreviousDir>,
+#[derive(Debug, Clone)] pub struct FS { pub previous_dir: Option<PreviousDir>,
     pub current_dir: CurrentDir,
     pub next_dir: Option<NextDir>,
-    pub dir_reader: DirReader,
-    cache_dir_path: String,
+    pub dir_reader: Arc<DirReader>,
+    pub file_downloader: Arc<FileDownloader>,
+    pub config: Arc<Config>,
 }
 
 impl FS {
-    pub fn create(cache_dir_path: String, dir_reader: DirReader) -> Result<Self, AppError> {
+    pub fn create(config: Arc<Config>, dir_reader: Arc<DirReader>, file_downloader: Arc<FileDownloader>) -> Result<Self, AppError> {
         let path = PathBuf::from("/");
         let (item, items) = dir_reader.read_dir(path_buf_to_string(path.clone())?)?;
         let current_dir = CurrentDir::new(path.clone(), item, items);
@@ -44,31 +46,32 @@ impl FS {
             None
         };
 
-        Ok(Self::new(cache_dir_path,  previous_dir, current_dir, next_dir, dir_reader))
+        Ok(Self::new(config,  previous_dir, current_dir, next_dir, dir_reader, file_downloader))
     }
 }
 
 impl FS {
     pub fn new(
-        cache_dir_path: String,
+        config: Arc<Config>,
         previous_dir: Option<PreviousDir>,
         current_dir: CurrentDir,
         next_dir: Option<NextDir>,
-        dir_reader: DirReader,
+        dir_reader: Arc<DirReader>,
+        file_downloader: Arc<FileDownloader>
     ) -> Self {
         Self {
-            cache_dir_path,
+            config,
             next_dir,
             current_dir,
             previous_dir,
             dir_reader,
+            file_downloader
         }
     }
 
     pub fn select_next_element_for_next_dir(&mut self, sender: FSSender) -> Result<(), AppError> {
         self.current_dir.state.select_next();
         self.next_dir = None;
-
         let c = self.clone();
 
         thread::spawn(move || {
@@ -161,55 +164,8 @@ impl FS {
     pub fn download_selected(&self, sender: Sender<usize>) -> Result<(), AppError> {
         // log::info!("Try download selected file: {}", self.current_dir.selected_file()?.name);
         let selected = self.current_dir.selected_file()?;
-        // let downloadFile = File {  local: CloudFile {}};
 
-
-        if let Some(cloud_file) = selected.cloud {
-            let unix_time = SystemTime::now().duration_since(UNIX_EPOCH);
-            let file_path = &cloud_file.path[5..];
-            let temp_dir_path = format!("{}/tmp/{}_{:?}", self.cache_dir_path, file_path, unix_time.unwrap().as_secs());
-            let temp_file_name = match selected.file_type {
-                NodeType::File => selected.name,
-                NodeType::Dir  => format!("{}.zip", selected.name)
-            };
-            let temp_full_path = format!("{}/{}", temp_dir_path, temp_file_name);
-            fs::create_dir_all(temp_dir_path).unwrap();
-            let disk_client = self.dir_reader.disk_client.clone();
-            let sync_dir = self.dir_reader.sync_dir_path.clone();
-
-            thread::spawn(move || {
-                let disk_file_reader = disk_client
-                    .file_reader(cloud_file.path.clone())
-                    .map_err(AppError::DiskErrors)?;
-
-                let mut wrapper = ProgressFileReader {
-                    bytes_readed: 0,
-                    it: disk_file_reader,
-                    sender,
-                };
-
-                let mut temp_file =
-                    fs::File::create(temp_full_path.clone()).map_err(AppError::FSErrors)?;
-
-                std::io::copy(&mut wrapper, &mut temp_file).map_err(AppError::FSErrors)?;
-
-
-                if let NodeType::Dir = selected.file_type {
-
-                    println!("Unpack!");
-                    let mut dir_zipped_archive = fs::File::open(temp_full_path.clone()).map_err(AppError::FSErrors)?;
-                    let local_path = format!("{}{}", sync_dir, &cloud_file.path[5..]);
-
-
-                    zip_extract::extract(Cursor::new(dir_zipped_archive).get_ref(), &PathBuf::from(local_path), true);
-        
-                };
-                
-                Result::<(), AppError>::Ok(())
-
-            });
-        };
-
+        self.file_downloader.download(sender, selected.clone())?;
         Ok(())
     }
 }

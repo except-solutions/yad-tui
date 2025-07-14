@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use crate::error::AppError;
 
@@ -30,3 +30,4 @@ pub fn path_buf_to_string(path: PathBuf) -> Result<String, AppError> {
         .into_string()
         .map_err(AppError::ConvertOsStringToStringErr)
 }
+

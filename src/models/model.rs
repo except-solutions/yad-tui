@@ -1,8 +1,10 @@
 use crate::components::main_screen::top_bar::TopBar;
 use crate::fs::FS;
+use crate::utils::file_downloader::FileDownloader;
 use crate::{config::Config, disk_client::DiskClient};
 use jammdb::DB;
 use std::{fmt, path::PathBuf};
+
 
 #[derive(Debug, Clone)]
 pub enum Popup {
@@ -20,7 +22,7 @@ pub struct Model {
     pub config: Config,
     pub config_path: PathBuf,
     pub meta_db: DB,
-    pub disk_client: DiskClient,
+    pub disk_client: DiskClient
 }
 
 impl fmt::Debug for Model {
