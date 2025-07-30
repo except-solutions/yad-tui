@@ -1,12 +1,14 @@
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::config::Config;
+use crate::disk_client::DiskClientT;
 use crate::error::AppError;
 use crate::models::file::{CloudFile, File, NodeType, State};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
 use crate::utils::file_downloader::FileDownloader;
 use crate::utils::progress_file_reader::ProgressFileReader;
+use log;
 use std::fs;
 use std::io::Cursor;
 use std::path::PathBuf;
@@ -14,20 +16,28 @@ use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
-use log;
 
 type NextDirSetResult = Result<Option<NextDir>, AppError>;
 type FSSender = Sender<NextDirSetResult>;
-#[derive(Debug, Clone)] pub struct FS { pub previous_dir: Option<PreviousDir>,
+#[derive(Debug, Clone)]
+pub struct FS<T: DiskClientT + Sync + Send + 'static> {
+    pub previous_dir: Option<PreviousDir>,
     pub current_dir: CurrentDir,
     pub next_dir: Option<NextDir>,
-    pub dir_reader: Arc<DirReader>,
-    pub file_downloader: Arc<FileDownloader>,
+    pub dir_reader: Arc<DirReader<T>>,
+    pub file_downloader: Arc<FileDownloader<T>>,
     pub config: Arc<Config>,
 }
 
-impl FS {
-    pub fn create(config: Arc<Config>, dir_reader: Arc<DirReader>, file_downloader: Arc<FileDownloader>) -> Result<Self, AppError> {
+impl<T> FS<T>
+where
+    T: DiskClientT + Sync + Send + 'static + Clone,
+{
+    pub fn create(
+        config: Arc<Config>,
+        dir_reader: Arc<DirReader<T>>,
+        file_downloader: Arc<FileDownloader<T>>,
+    ) -> Result<Self, AppError> {
         let path = PathBuf::from("/");
         let (item, items) = dir_reader.read_dir(path_buf_to_string(path.clone())?)?;
         let current_dir = CurrentDir::new(path.clone(), item, items);
@@ -46,18 +56,28 @@ impl FS {
             None
         };
 
-        Ok(Self::new(config,  previous_dir, current_dir, next_dir, dir_reader, file_downloader))
+        Ok(Self::new(
+            config,
+            previous_dir,
+            current_dir,
+            next_dir,
+            dir_reader,
+            file_downloader,
+        ))
     }
 }
 
-impl FS {
+impl<T> FS<T>
+where
+    T: DiskClientT + Sync + Send + 'static + Clone,
+{
     pub fn new(
         config: Arc<Config>,
         previous_dir: Option<PreviousDir>,
         current_dir: CurrentDir,
         next_dir: Option<NextDir>,
-        dir_reader: Arc<DirReader>,
-        file_downloader: Arc<FileDownloader>
+        dir_reader: Arc<DirReader<T>>,
+        file_downloader: Arc<FileDownloader<T>>,
     ) -> Self {
         Self {
             config,
@@ -65,7 +85,7 @@ impl FS {
             current_dir,
             previous_dir,
             dir_reader,
-            file_downloader
+            file_downloader,
         }
     }
 
@@ -169,4 +189,3 @@ impl FS {
         Ok(())
     }
 }
-

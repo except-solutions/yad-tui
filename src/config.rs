@@ -1,3 +1,4 @@
+use crate::disk_client::DiskClientT;
 use crate::models::model::Model;
 use log::{self, LevelFilter};
 use serde::{Deserialize, Serialize};
@@ -53,7 +54,8 @@ impl FromStr for DebugLevel {
 pub struct Main {
     pub lang: String,
     pub sync_dir_path: String,
-    pub log_level: DebugLevel, pub cache_dir_path: String,
+    pub log_level: DebugLevel,
+    pub cache_dir_path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -96,6 +98,9 @@ pub fn get_real_config_path(path: &String) -> PathBuf {
     }
 }
 
-pub fn get_text_config(model: &mut Model) -> String {
+pub fn get_text_config<T>(model: &mut Model<T>) -> String
+where
+    T: DiskClientT + Sync + Send + 'static + Clone,
+{
     toml::to_string(&model.config).unwrap()
 }

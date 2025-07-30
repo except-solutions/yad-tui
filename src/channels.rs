@@ -1,6 +1,9 @@
 use std::sync::mpsc::{Receiver, Sender};
 
-use crate::{components::main_screen::next_dir::NextDir, error::AppError, models::model::Model};
+use crate::{
+    components::main_screen::next_dir::NextDir, disk_client::DiskClientT, error::AppError,
+    models::model::Model,
+};
 
 pub struct Channels {
     pub read_next_dir_ch: ReadNextDirChannel,
@@ -14,11 +17,16 @@ pub struct ReadNextDirChannel {
 }
 
 pub trait Channel {
-    fn handle(&self, model: &mut Model);
+    fn handle<T>(&self, model: &mut Model<T>)
+    where
+        T: DiskClientT + Sync + Send + 'static + Clone;
 }
 
 impl Channel for ReadNextDirChannel {
-    fn handle(&self, model: &mut Model) {
+    fn handle<T>(&self, model: &mut Model<T>)
+    where
+        T: DiskClientT + Sync + Send + 'static + Clone,
+    {
         let result = &self.receiver.try_recv();
         if let Ok(Ok(next_dir)) = result {
             let selected = model.fs.current_dir.selected_file();
@@ -39,7 +47,10 @@ pub struct DownloadFileChannel {
 }
 
 impl Channel for DownloadFileChannel {
-    fn handle(&self, _: &mut Model) {
+    fn handle<T>(&self, _: &mut Model<T>)
+    where
+        T: DiskClientT + Sync + Send + 'static + Clone,
+    {
         if let Ok(bytes) = &self.receiver.try_recv() {
             // TODO: Add downloaded bytes in model
             // bytes.clone();

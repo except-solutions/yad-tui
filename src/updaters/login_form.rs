@@ -1,4 +1,5 @@
 use crate::{
+    disk_client::DiskClientT,
     meta_db::Meta,
     models::model::{Model, Popup},
 };
@@ -49,7 +50,7 @@ fn update_form(
     })
 }
 
-pub fn send_form(model: &mut Model, code: String) {
+pub fn send_form<T: DiskClientT + Send + Sync + 'static>(model: &mut Model<T>, code: String) {
     match model.disk_client.auth(code.clone()) {
         Ok(auth_response) => {
             model

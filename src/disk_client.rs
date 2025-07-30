@@ -131,6 +131,25 @@ impl fmt::Display for DiskError {
     }
 }
 
+pub trait DiskClientT {
+    fn auth(&self, code: String) -> Result<SuccessAuth, String>;
+
+    fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError>;
+
+    fn item(
+        &self,
+        path: &str,
+        offset: Option<u32>,
+        limit: Option<u32>,
+    ) -> Result<ItemResponse, DiskError>;
+
+    fn prepare_request(&self, request_f: impl Fn() -> Request) -> Result<Request, DiskError>;
+
+    fn set_api_token(&self, request: Request) -> Result<Request, DiskError>;
+
+    fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError>;
+}
+
 #[derive(Debug, Clone)]
 pub struct DiskClient {
     pub api_url: String,
@@ -151,7 +170,42 @@ impl DiskClient {
         }
     }
 
-    pub fn auth(&self, code: String) -> Result<SuccessAuth, String> {
+    fn match_response<T>(
+        &self,
+        response: Result<ureq::Response, HTTPError>,
+        response_handler: impl Fn(ureq::Response) -> T,
+    ) -> Result<T, DiskError> {
+        match response {
+            Ok(response_body) => Ok(response_handler(response_body)),
+            Err(HTTPError::Status(401, response_err)) => {
+                log::error!(
+                    "Unauthorized response exception: {:?}",
+                    response_err.into_string()
+                );
+                Err(DiskError::unauthorized_default())
+            }
+            Err(HTTPError::Status(403, response_err)) => {
+                log::error!("Forbidden error: {:?}", response_err.into_string());
+                Err(DiskError::forbidden_default())
+            }
+            Err(HTTPError::Status(code, response_err)) => {
+                log::error!(
+                    "Unknown API error, code: {} {:?}",
+                    code,
+                    response_err.into_string()
+                );
+                Err(DiskError::unknown_default())
+            }
+            Err(response_error) => {
+                log::error!("Unexpected response error: {:?}", response_error);
+                Err(DiskError::unknown_default())
+            }
+        }
+    }
+}
+
+impl DiskClientT for DiskClient {
+    fn auth(&self, code: String) -> Result<SuccessAuth, String> {
         // TODO: rewrite with new api match_respose, set_token etc
         let url = &format!("{}/token", self.oauth_url);
         let token = BASE64_STANDARD.encode(format!("{}:{}", &self.client_id, &self.client_secret));
@@ -198,12 +252,12 @@ impl DiskClient {
         }
     }
 
-    pub fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
+    fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
         let response = self.prepare_request(|| ureq::get(&self.api_url))?.call();
         self.match_response::<DiskMetaResponse>(response, into_json)
     }
 
-    pub fn item(
+    fn item(
         &self,
         path: &str,
         offset: Option<u32>,
@@ -239,10 +293,7 @@ impl DiskClient {
         Ok(request.set("Authorization", &format!("OAuth {token}", token = token)))
     }
 
-    pub fn file_reader(
-        &self,
-        cloud_path: String,
-    ) -> Result<Box<dyn Read + Send + Sync>, DiskError> {
+    fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError> {
         let fetch_download_link_response = self
             .prepare_request(|| {
                 ureq::get(
@@ -262,39 +313,6 @@ impl DiskClient {
 
         // std::io::copy(&mut remote_file_reader, &mut result_file).unwrap();
         Ok(remote_file_reader)
-    }
-
-    fn match_response<T>(
-        &self,
-        response: Result<ureq::Response, HTTPError>,
-        response_handler: impl Fn(ureq::Response) -> T,
-    ) -> Result<T, DiskError> {
-        match response {
-            Ok(response_body) => Ok(response_handler(response_body)),
-            Err(HTTPError::Status(401, response_err)) => {
-                log::error!(
-                    "Unauthorized response exception: {:?}",
-                    response_err.into_string()
-                );
-                Err(DiskError::unauthorized_default())
-            }
-            Err(HTTPError::Status(403, response_err)) => {
-                log::error!("Forbidden error: {:?}", response_err.into_string());
-                Err(DiskError::forbidden_default())
-            }
-            Err(HTTPError::Status(code, response_err)) => {
-                log::error!(
-                    "Unknown API error, code: {} {:?}",
-                    code,
-                    response_err.into_string()
-                );
-                Err(DiskError::unknown_default())
-            }
-            Err(response_error) => {
-                log::error!("Unexpected response error: {:?}", response_error);
-                Err(DiskError::unknown_default())
-            }
-        }
     }
 }
 

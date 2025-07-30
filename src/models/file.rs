@@ -32,13 +32,13 @@ pub struct CloudFile {
     pub path: String,
 }
 
-
 impl CloudFile {
-
     const DISK_URI_PREFIX_LEN: usize = 5;
 
     pub fn new(path: String) -> Self {
-        CloudFile { path: path[Self::DISK_URI_PREFIX_LEN..].to_string() }
+        CloudFile {
+            path: path[Self::DISK_URI_PREFIX_LEN..].to_string(),
+        }
     }
 }
 
@@ -63,7 +63,8 @@ pub enum NodeType {
 }
 
 impl File {
-    pub fn is_dir(&self) -> bool { self.file_type == NodeType::Dir
+    pub fn is_dir(&self) -> bool {
+        self.file_type == NodeType::Dir
     }
     pub fn is_file(&self) -> bool {
         self.file_type == NodeType::File

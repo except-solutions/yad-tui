@@ -12,6 +12,7 @@ pub enum AppError {
     ConvertPathBufToStr,
     MissingSelectedElelement,
     MultipleErrors(Vec<AppError>),
+    LogicalError(String),
 }
 
 impl AppError {

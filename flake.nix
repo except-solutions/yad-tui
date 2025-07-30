@@ -49,9 +49,8 @@
             pkgs.gcc
             pkgs.lldb
             pkgs.vscode-extensions.vadimcn.vscode-lldb
-            pkgs.vscode-extensions.vadimcn.vscode-lldb
             pkgs.rustup
-            pkgs.lldb_17
+#            pkgs.lldb_17
 #            config.process-compose.cargo-doc-live.outputs.package
           ];
         };

@@ -1,3 +1,4 @@
+use crate::disk_client::DiskClientT;
 use crate::models::model::Model;
 use crate::update::InputAction::*;
 use crate::update::Message;
@@ -9,7 +10,10 @@ use std::io;
 use std::time::Duration;
 use KeyCode::*;
 
-pub fn handle_events(model: &Model) -> io::Result<Option<Message>> {
+pub fn handle_events<T>(model: &Model<T>) -> io::Result<Option<Message>>
+where
+    T: DiskClientT + Sync + Send + 'static + Clone,
+{
     if event::poll(Duration::from_millis(250))? {
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
@@ -18,7 +22,7 @@ pub fn handle_events(model: &Model) -> io::Result<Option<Message>> {
                         Esc => Some(ClosePopup),
                         Char(word) => Some(InputModeAction(InputChar(word))),
                         Backspace => Some(InputModeAction(DeleteChar)),
-                        Enter => Some(InputModeAction(Send)),
+                        Enter => Some(InputModeAction(SendCh)),
                         _ => Some(Continue),
                     }
                 } else {
