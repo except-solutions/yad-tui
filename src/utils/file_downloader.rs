@@ -15,13 +15,13 @@ use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone)]
-pub struct FileDownloader<T: DiskClientT + Sync + Send + 'static> {
+pub struct FileDownloader<T: DiskClientT> {
     pub config: Arc<Config>,
     pub dir_reader: Arc<DirReader<T>>,
     pub disk_client: Arc<T>,
 }
 
-impl<T: DiskClientT + Sync + Send + 'static> FileDownloader<T> {
+impl<T: DiskClientT> FileDownloader<T> {
     pub fn download(
         &self,
         sender: Sender<usize>,

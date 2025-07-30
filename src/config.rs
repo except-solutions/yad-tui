@@ -100,7 +100,7 @@ pub fn get_real_config_path(path: &String) -> PathBuf {
 
 pub fn get_text_config<T>(model: &mut Model<T>) -> String
 where
-    T: DiskClientT + Sync + Send + 'static + Clone,
+    T: DiskClientT,
 {
     toml::to_string(&model.config).unwrap()
 }

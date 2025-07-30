@@ -12,7 +12,7 @@ use crate::components::main_screen::next_dir::NextDir;
 use ratatui::widgets::{Block, Clear, Paragraph};
 use ratatui::Frame;
 
-pub fn ui<T: DiskClientT + Send + Sync + 'static + Clone>(model: &mut Model<T>, frame: &mut Frame) {
+pub fn ui<T: DiskClientT>(model: &mut Model<T>, frame: &mut Frame) {
     if model.is_authenticated() {
         let [top_bar, dirs] =
             Layout::vertical([Constraint::Percentage(5), Constraint::Percentage(95)])

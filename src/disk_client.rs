@@ -131,7 +131,7 @@ impl fmt::Display for DiskError {
     }
 }
 
-pub trait DiskClientT {
+ pub trait DiskClientT: Sync + Send + Clone + 'static {
     fn auth(&self, code: String) -> Result<SuccessAuth, String>;
 
     fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError>;

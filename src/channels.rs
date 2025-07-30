@@ -19,13 +19,13 @@ pub struct ReadNextDirChannel {
 pub trait Channel {
     fn handle<T>(&self, model: &mut Model<T>)
     where
-        T: DiskClientT + Sync + Send + 'static + Clone;
+        T: DiskClientT;
 }
 
 impl Channel for ReadNextDirChannel {
     fn handle<T>(&self, model: &mut Model<T>)
     where
-        T: DiskClientT + Sync + Send + 'static + Clone,
+        T: DiskClientT,
     {
         let result = &self.receiver.try_recv();
         if let Ok(Ok(next_dir)) = result {
@@ -49,7 +49,7 @@ pub struct DownloadFileChannel {
 impl Channel for DownloadFileChannel {
     fn handle<T>(&self, _: &mut Model<T>)
     where
-        T: DiskClientT + Sync + Send + 'static + Clone,
+        T: DiskClientT,
     {
         if let Ok(bytes) = &self.receiver.try_recv() {
             // TODO: Add downloaded bytes in model

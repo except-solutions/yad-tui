@@ -25,7 +25,7 @@ pub enum Message {
     DownloadFile,
 }
 
-pub fn update<T: DiskClientT + Send + Sync + 'static + Clone>(
+pub fn update<T: DiskClientT>(
     model: &mut Model<T>,
     msg: Message,
     channels: &Channels,

@@ -12,7 +12,7 @@ use KeyCode::*;
 
 pub fn handle_events<T>(model: &Model<T>) -> io::Result<Option<Message>>
 where
-    T: DiskClientT + Sync + Send + 'static + Clone,
+    T: DiskClientT,
 {
     if event::poll(Duration::from_millis(250))? {
         if let Event::Key(key) = event::read()? {

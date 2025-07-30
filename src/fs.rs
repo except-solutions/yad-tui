@@ -20,7 +20,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 type NextDirSetResult = Result<Option<NextDir>, AppError>;
 type FSSender = Sender<NextDirSetResult>;
 #[derive(Debug, Clone)]
-pub struct FS<T: DiskClientT + Sync + Send + 'static> {
+pub struct FS<T: DiskClientT> {
     pub previous_dir: Option<PreviousDir>,
     pub current_dir: CurrentDir,
     pub next_dir: Option<NextDir>,
@@ -31,7 +31,7 @@ pub struct FS<T: DiskClientT + Sync + Send + 'static> {
 
 impl<T> FS<T>
 where
-    T: DiskClientT + Sync + Send + 'static + Clone,
+    T: DiskClientT,
 {
     pub fn create(
         config: Arc<Config>,
@@ -69,7 +69,7 @@ where
 
 impl<T> FS<T>
 where
-    T: DiskClientT + Sync + Send + 'static + Clone,
+    T: DiskClientT,
 {
     pub fn new(
         config: Arc<Config>,

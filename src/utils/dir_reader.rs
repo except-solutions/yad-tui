@@ -16,12 +16,12 @@ use super::common::read_f_name;
 
 
 #[derive(Debug, Clone)]
-pub struct DirReader<T: DiskClientT + Sync + Send + 'static> {
+pub struct DirReader<T: DiskClientT> {
     pub sync_dir_path: String,
     pub disk_client: Arc<T>,
 }
 
-impl<T: DiskClientT + Sync + Send + 'static> DirReader<T> {
+impl<T: DiskClientT> DirReader<T> {
     pub fn read_dir(&self, path: String) -> Result<(File, Vec<File>), AppError> {
         let path_buf = PathBuf::from(self.sync_dir_path.clone() + "/" + path.as_str());
 
