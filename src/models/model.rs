@@ -1,7 +1,7 @@
 use crate::components::main_screen::top_bar::TopBar;
+use crate::config::Config;
 use crate::disk_client::DiskClientT;
 use crate::fs::FS;
-use crate::{config::Config, disk_client::DiskClient};
 use jammdb::DB;
 use std::sync::Arc;
 use std::{fmt, path::PathBuf};

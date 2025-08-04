@@ -3,7 +3,7 @@ use log;
 use rust_i18n::t;
 use serde::{de::DeserializeOwned, Deserialize};
 use std::io::Read;
-use std::{collections::HashMap, fmt, fs::File, io::Write};
+use std::{collections::HashMap, fmt};
 use ureq::{Error as HTTPError, Request};
 
 use crate::{config::Config, meta_db::Meta};
@@ -131,7 +131,7 @@ impl fmt::Display for DiskError {
     }
 }
 
- pub trait DiskClientT: Sync + Send + Clone + 'static {
+pub trait DiskClientT: Sync + Send + Clone + 'static {
     fn auth(&self, code: String) -> Result<SuccessAuth, String>;
 
     fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError>;

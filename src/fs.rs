@@ -3,19 +3,14 @@ use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::Prev
 use crate::config::Config;
 use crate::disk_client::DiskClientT;
 use crate::error::AppError;
-use crate::models::file::{CloudFile, File, NodeType, State};
+use crate::models::file::{File, NodeType};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
 use crate::utils::file_downloader::FileDownloader;
-use crate::utils::progress_file_reader::ProgressFileReader;
-use log;
-use std::fs;
-use std::io::Cursor;
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::thread;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 type NextDirSetResult = Result<Option<NextDir>, AppError>;
 type FSSender = Sender<NextDirSetResult>;

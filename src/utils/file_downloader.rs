@@ -1,4 +1,3 @@
-pub(crate) use crate::disk_client::DiskClient;
 use crate::disk_client::DiskClientT;
 use std::sync::Arc;
 

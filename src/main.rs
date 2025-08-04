@@ -123,7 +123,7 @@ fn main() -> io::Result<()> {
         },
         channels,
     );
-    //    let (mut model, channels) = init();
+
     info!("Start application");
     info!("Initialize application model");
     debug!("Initializated model: {:?}", model);

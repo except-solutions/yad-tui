@@ -51,7 +51,7 @@ impl Channel for DownloadFileChannel {
     where
         T: DiskClientT,
     {
-        if let Ok(bytes) = &self.receiver.try_recv() {
+        if let Ok(_bytes) = &self.receiver.try_recv() {
             // TODO: Add downloaded bytes in model
             // bytes.clone();
         };

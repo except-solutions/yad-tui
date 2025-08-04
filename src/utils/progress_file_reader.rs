@@ -1,4 +1,4 @@
-use std::{sync::mpsc::Sender, thread};
+use std::sync::mpsc::Sender;
 
 pub struct ProgressFileReader<T> {
     pub bytes_readed: usize,
@@ -13,7 +13,7 @@ impl<R: std::io::Read> std::io::Read for ProgressFileReader<R> {
         let inc = self.it.read(buf)?;
         self.bytes_readed += inc;
 
-        self.sender.send(self.bytes_readed);
+        let _ = self.sender.send(self.bytes_readed);
         Ok(inc)
     }
 }

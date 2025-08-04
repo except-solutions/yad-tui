@@ -1,9 +1,62 @@
-use std::sync::Arc;
+use std::io::BufReader;
+use std::sync::{mpsc, Arc};
 
+use std::{fs, panic};
 use yad_tui::{
-    config::{Api, Config, Main, MetaDb},
-    disk_client::DiskClient,
+    config::{Api, Config, DebugLevel, Main, MetaDb},
+    disk_client::DiskClientT,
+    models::file::{CloudFile, File, NodeType, State},
+    utils::{dir_reader::DirReader, file_downloader::FileDownloader},
 };
+
+#[derive(Clone)]
+struct DiskClientMock {
+    fake_file_path: String,
+}
+
+impl DiskClientT for DiskClientMock {
+    fn auth(&self, _code: String) -> Result<yad_tui::disk_client::SuccessAuth, String> {
+        todo!()
+    }
+
+    fn disk_meta(
+        &self,
+    ) -> Result<yad_tui::disk_client::DiskMetaResponse, yad_tui::disk_client::DiskError> {
+        todo!()
+    }
+
+    fn item(
+        &self,
+        _path: &str,
+        _offset: Option<u32>,
+        _limit: Option<u32>,
+    ) -> Result<yad_tui::disk_client::ItemResponse, yad_tui::disk_client::DiskError> {
+        todo!()
+    }
+
+    fn prepare_request(
+        &self,
+        _request_f: impl Fn() -> ureq::Request,
+    ) -> Result<ureq::Request, yad_tui::disk_client::DiskError> {
+        todo!()
+    }
+
+    fn set_api_token(
+        &self,
+        _request: ureq::Request,
+    ) -> Result<ureq::Request, yad_tui::disk_client::DiskError> {
+        todo!()
+    }
+
+    fn file_reader(
+        &self,
+        _cloud_path: String,
+    ) -> Result<Box<dyn std::io::Read + Send + Sync>, yad_tui::disk_client::DiskError> {
+        let file = fs::File::open(self.fake_file_path.clone()).unwrap();
+        let buf_reader = BufReader::new(file);
+        Ok(Box::new(buf_reader))
+    }
+}
 
 #[test]
 fn test_single_file_download() {
@@ -19,11 +72,59 @@ fn test_single_file_download() {
         },
         main: Main {
             lang: String::from("en"),
-            sync_dir_path: todo!(),
-            log_level: todo!(),
-            cache_dir_path: todo!(),
+            sync_dir_path: String::from("./tmp/sync_dir/"),
+            log_level: DebugLevel::Debug,
+            cache_dir_path: "./tmp/cache".to_string(),
         },
     });
+    fs::create_dir_all(config.main.sync_dir_path.clone()).unwrap();
 
-    assert_eq!(true, true);
+    let result = panic::catch_unwind(|| {
+        let disk_client = Arc::new(DiskClientMock {
+            fake_file_path: "tests/fixtures/fake_file.ext".to_string(),
+        });
+        let dir_reader = Arc::new(DirReader {
+            sync_dir_path: config.main.sync_dir_path.clone(),
+            disk_client: Arc::clone(&disk_client),
+        });
+
+        let (download_file_sender, _) = mpsc::channel::<usize>();
+
+        let file_downloader = FileDownloader {
+            config: config.clone(),
+            dir_reader,
+            disk_client,
+        };
+
+        let file_to_download = File {
+            name: "test_file.ext".to_string(),
+            file_type: NodeType::File,
+            state: State::Cloud,
+            cloud: Some(CloudFile {
+                path: "test_f_name.ext".to_string(),
+            }),
+            local: None,
+        };
+
+        let _ = file_downloader
+            .download(download_file_sender, file_to_download.clone())
+            .unwrap()
+            .join()
+            .unwrap()
+            .unwrap();
+
+        let test_file_stat = fs::metadata("tests/fixtures/fake_file.ext".to_string()).unwrap();
+        let result_file_stat = fs::metadata(format!(
+            "{}{}",
+            config.main.sync_dir_path,
+            file_to_download.cloud.unwrap().path
+        ))
+        .unwrap();
+
+        assert_eq!(test_file_stat.len(), result_file_stat.len());
+        assert!(result_file_stat.is_file());
+    });
+
+    fs::remove_dir_all("./tmp").unwrap();
+    result.unwrap();
 }
