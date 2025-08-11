@@ -7,10 +7,12 @@ pub enum AppError {
     DiskErrors(DiskError),
     FSErrors(Error),
     InvalidFileName(String),
+    InvalidPathToDelete(String),
     ConvertOsStringToStringErr(OsString),
     ConvertPathBufToStr,
     MissingSelectedElelement,
     MultipleErrors(Vec<AppError>),
+    LogicalError(String),
 }
 
 impl AppError {

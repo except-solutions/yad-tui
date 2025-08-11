@@ -1,4 +1,5 @@
 use crate::channels::Channels;
+use crate::disk_client::DiskClientT;
 use crate::models::model::{Model, Popup};
 use crate::update::Message::{Continue, Exit, MoveDown, MoveUp, ShowConfig};
 use crate::updaters::login_form::{remove_last_symbol, send_form, update_input};
@@ -7,7 +8,7 @@ use crate::updaters::login_form::{remove_last_symbol, send_form, update_input};
 pub enum InputAction {
     InputChar(char),
     DeleteChar,
-    Send,
+    SendCh,
 }
 
 #[derive(PartialEq)]
@@ -21,9 +22,14 @@ pub enum Message {
     EnterSelectedDir,
     EnterPrevDir,
     InputModeAction(InputAction),
+    DownloadFile,
 }
 
-pub fn update(model: &mut Model, msg: Message, channels: &Channels) -> Option<Message> {
+pub fn update<T: DiskClientT>(
+    model: &mut Model<T>,
+    msg: Message,
+    channels: &Channels,
+) -> Option<Message> {
     match (msg, model.popup.clone()) {
         (MoveDown, None) => {
             model
@@ -72,13 +78,20 @@ pub fn update(model: &mut Model, msg: Message, channels: &Channels) -> Option<Me
             Some(Continue)
         }
         (
-            Message::InputModeAction(InputAction::Send),
+            Message::InputModeAction(InputAction::SendCh),
             Some(Popup::LoginForm {
                 code_input,
                 error_message: _,
             }),
         ) => {
             send_form(model, code_input);
+            Some(Continue)
+        }
+        (Message::DownloadFile, _) => {
+            model
+                .fs
+                .download_selected(channels.download_file_channel.sender.clone())
+                .unwrap();
             Some(Continue)
         }
         (_, _) => Some(Continue),

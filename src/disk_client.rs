@@ -1,11 +1,12 @@
-use std::{collections::HashMap, fmt};
-
-use crate::{config::Config, meta_db::Meta};
 use base64::prelude::*;
 use log;
 use rust_i18n::t;
 use serde::{de::DeserializeOwned, Deserialize};
+use std::io::Read;
+use std::{collections::HashMap, fmt};
 use ureq::{Error as HTTPError, Request};
+
+use crate::{config::Config, meta_db::Meta};
 
 #[derive(Deserialize)]
 enum AuthResponse {
@@ -93,6 +94,13 @@ pub enum DiskError {
     EmptyToken,
 }
 
+#[derive(Deserialize)]
+pub struct DownloadHref {
+    pub href: String,
+    pub method: String,
+    pub templated: bool,
+}
+
 impl DiskError {
     pub fn unknown_default() -> Self {
         Self::UnknownServer(t!("disk.errors.unknown").to_string())
@@ -123,6 +131,25 @@ impl fmt::Display for DiskError {
     }
 }
 
+pub trait DiskClientT: Sync + Send + Clone + 'static {
+    fn auth(&self, code: String) -> Result<SuccessAuth, String>;
+
+    fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError>;
+
+    fn item(
+        &self,
+        path: &str,
+        offset: Option<u32>,
+        limit: Option<u32>,
+    ) -> Result<ItemResponse, DiskError>;
+
+    fn prepare_request(&self, request_f: impl Fn() -> Request) -> Result<Request, DiskError>;
+
+    fn set_api_token(&self, request: Request) -> Result<Request, DiskError>;
+
+    fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError>;
+}
+
 #[derive(Debug, Clone)]
 pub struct DiskClient {
     pub api_url: String,
@@ -143,7 +170,42 @@ impl DiskClient {
         }
     }
 
-    pub fn auth(&self, code: String) -> Result<SuccessAuth, String> {
+    fn match_response<T>(
+        &self,
+        response: Result<ureq::Response, HTTPError>,
+        response_handler: impl Fn(ureq::Response) -> T,
+    ) -> Result<T, DiskError> {
+        match response {
+            Ok(response_body) => Ok(response_handler(response_body)),
+            Err(HTTPError::Status(401, response_err)) => {
+                log::error!(
+                    "Unauthorized response exception: {:?}",
+                    response_err.into_string()
+                );
+                Err(DiskError::unauthorized_default())
+            }
+            Err(HTTPError::Status(403, response_err)) => {
+                log::error!("Forbidden error: {:?}", response_err.into_string());
+                Err(DiskError::forbidden_default())
+            }
+            Err(HTTPError::Status(code, response_err)) => {
+                log::error!(
+                    "Unknown API error, code: {} {:?}",
+                    code,
+                    response_err.into_string()
+                );
+                Err(DiskError::unknown_default())
+            }
+            Err(response_error) => {
+                log::error!("Unexpected response error: {:?}", response_error);
+                Err(DiskError::unknown_default())
+            }
+        }
+    }
+}
+
+impl DiskClientT for DiskClient {
+    fn auth(&self, code: String) -> Result<SuccessAuth, String> {
         // TODO: rewrite with new api match_respose, set_token etc
         let url = &format!("{}/token", self.oauth_url);
         let token = BASE64_STANDARD.encode(format!("{}:{}", &self.client_id, &self.client_secret));
@@ -190,12 +252,12 @@ impl DiskClient {
         }
     }
 
-    pub fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
+    fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
         let response = self.prepare_request(|| ureq::get(&self.api_url))?.call();
-        self.match_response::<DiskMetaResponse>(response)
+        self.match_response::<DiskMetaResponse>(response, into_json)
     }
 
-    pub fn item(
+    fn item(
         &self,
         path: &str,
         offset: Option<u32>,
@@ -219,7 +281,7 @@ impl DiskClient {
                 )
             })?
             .call();
-        self.match_response::<ItemResponse>(response)
+        self.match_response::<ItemResponse>(response, into_json)
     }
 
     fn prepare_request(&self, request_f: impl Fn() -> Request) -> Result<Request, DiskError> {
@@ -231,35 +293,27 @@ impl DiskClient {
         Ok(request.set("Authorization", &format!("OAuth {token}", token = token)))
     }
 
-    fn match_response<T: DeserializeOwned>(
-        &self,
-        response: Result<ureq::Response, HTTPError>,
-    ) -> Result<T, DiskError> {
-        match response {
-            Ok(response_body) => Ok(response_body.into_json::<T>().unwrap()),
-            Err(HTTPError::Status(401, response_err)) => {
-                log::error!(
-                    "Unauthorized response exception: {:?}",
-                    response_err.into_string()
-                );
-                Err(DiskError::unauthorized_default())
-            }
-            Err(HTTPError::Status(403, response_err)) => {
-                log::error!("Forbidden error: {:?}", response_err.into_string());
-                Err(DiskError::forbidden_default())
-            }
-            Err(HTTPError::Status(code, response_err)) => {
-                log::error!(
-                    "Unknown API error, code: {} {:?}",
-                    code,
-                    response_err.into_string()
-                );
-                Err(DiskError::unknown_default())
-            }
-            Err(response_error) => {
-                log::error!("Unexpected response error: {:?}", response_error);
-                Err(DiskError::unknown_default())
-            }
-        }
+    fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError> {
+        let fetch_download_link_response = self
+            .prepare_request(|| {
+                ureq::get(
+                    format!("{}/resources/download?path={}", self.api_url, cloud_path).as_str(),
+                )
+            })?
+            .call();
+
+        let download_link =
+            self.match_response::<DownloadHref>(fetch_download_link_response, into_json)?;
+        let remote_file_response = self
+            .prepare_request(|| ureq::get(&download_link.href))?
+            .call();
+
+        let remote_file_reader = self.match_response(remote_file_response, |r| r.into_reader())?;
+
+        Ok(remote_file_reader)
     }
+}
+
+fn into_json<T: DeserializeOwned>(response: ureq::Response) -> T {
+    response.into_json::<T>().unwrap()
 }

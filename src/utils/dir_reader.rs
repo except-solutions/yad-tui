@@ -3,10 +3,11 @@ use std::{
     fs::{self, ReadDir},
     io::Error,
     path::PathBuf,
+    sync::Arc,
 };
 
 use crate::{
-    disk_client::{DirItem, DiskClient, ItemResponse},
+    disk_client::{DirItem, DiskClientT, ItemResponse},
     error::AppError,
     models::file::{CloudFile, File, LocalFile, NodeType, State},
 };
@@ -14,12 +15,12 @@ use crate::{
 use super::common::read_f_name;
 
 #[derive(Debug, Clone)]
-pub struct DirReader {
+pub struct DirReader<T: DiskClientT> {
     pub sync_dir_path: String,
-    pub disk_client: DiskClient,
+    pub disk_client: Arc<T>,
 }
 
-impl DirReader {
+impl<T: DiskClientT> DirReader<T> {
     pub fn read_dir(&self, path: String) -> Result<(File, Vec<File>), AppError> {
         let path_buf = PathBuf::from(self.sync_dir_path.clone() + "/" + path.as_str());
 
@@ -47,7 +48,7 @@ impl DirReader {
                 name: read_f_name(path.clone())?,
                 file_type: NodeType::Dir,
                 state,
-                cloud: cloud_root_dir.map(|_cd| CloudFile {}),
+                cloud: cloud_root_dir.map(|cd| CloudFile::new(cd.path)),
                 local: if local_dir_exists {
                     Some(LocalFile { path: path_buf })
                 } else {
@@ -71,7 +72,7 @@ impl DirReader {
                         } else {
                             NodeType::File
                         },
-                        cloud: Some(CloudFile {}),
+                        cloud: Some(CloudFile::new(path.clone())),
                         local: None,
                         state: State::Cloud,
                     })
@@ -105,7 +106,9 @@ impl DirReader {
                         let f_name = e.file_name().into_string().unwrap();
                         let f_type = e.file_type()?;
                         // TODO fill
-                        let cloud = cloud_dir.get(&f_name).map(|_cloud_item| CloudFile {});
+                        let cloud = cloud_dir
+                            .get(&f_name)
+                            .map(|cloud_item| CloudFile::new(cloud_item.path.clone()));
                         let local = LocalFile { path: e.path() };
                         let node_type = if f_type.is_file() {
                             NodeType::File
@@ -129,6 +132,7 @@ impl DirReader {
             .into_iter()
             .map(Result::unwrap_err)
             .collect::<Vec<Error>>();
+
         log::info!("Invalid entities {:?}", invalid_entites_errors);
 
         let local_and_cloud_files = valid_entites
@@ -153,7 +157,7 @@ impl DirReader {
                     NodeType::File
                 },
                 state: State::Cloud,
-                cloud: Some(CloudFile {}),
+                cloud: Some(CloudFile::new(di.path)),
                 local: None,
             })
             .collect::<Vec<File>>();

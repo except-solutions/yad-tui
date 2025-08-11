@@ -1,7 +1,9 @@
 use crate::components::main_screen::top_bar::TopBar;
+use crate::config::Config;
+use crate::disk_client::DiskClientT;
 use crate::fs::FS;
-use crate::{config::Config, disk_client::DiskClient};
 use jammdb::DB;
+use std::sync::Arc;
 use std::{fmt, path::PathBuf};
 
 #[derive(Debug, Clone)]
@@ -13,17 +15,22 @@ pub enum Popup {
     },
 }
 
-pub struct Model {
+pub struct Model<T: DiskClientT + Send + Sync + 'static> {
+    pub is_auth: bool,
     pub top_bar: Option<TopBar>,
-    pub fs: FS,
+    pub fs: FS<T>,
     pub popup: Option<Popup>,
     pub config: Config,
     pub config_path: PathBuf,
     pub meta_db: DB,
-    pub disk_client: DiskClient,
+    pub disk_client: Arc<T>,
 }
 
-impl fmt::Debug for Model {
+impl<T> fmt::Debug for Model<T>
+where
+    T: DiskClientT + Send + Sync,
+    T: std::fmt::Debug,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Model")
             .field("fs", &self.fs)
@@ -35,8 +42,8 @@ impl fmt::Debug for Model {
     }
 }
 
-impl Model {
+impl<T: DiskClientT + Sync + Send + 'static> Model<T> {
     pub fn is_authenticated(&self) -> bool {
-        self.disk_client.token.is_some()
+        self.is_auth
     }
 }

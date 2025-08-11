@@ -28,7 +28,19 @@ impl State {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct CloudFile {}
+pub struct CloudFile {
+    pub path: String,
+}
+
+impl CloudFile {
+    const DISK_URI_PREFIX_LEN: usize = 5;
+
+    pub fn new(path: String) -> Self {
+        CloudFile {
+            path: path[Self::DISK_URI_PREFIX_LEN..].to_string(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct LocalFile {

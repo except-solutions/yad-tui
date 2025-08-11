@@ -1,3 +1,4 @@
+use crate::disk_client::DiskClientT;
 use crate::models::model::Model;
 use log::{self, LevelFilter};
 use serde::{Deserialize, Serialize};
@@ -5,7 +6,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use toml;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Api {
     pub api_url: String,
     pub oauth_url: String,
@@ -22,7 +23,7 @@ impl Api {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum DebugLevel {
     Info,
     Debug,
@@ -49,7 +50,7 @@ impl FromStr for DebugLevel {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Main {
     pub lang: String,
     pub sync_dir_path: String,
@@ -57,12 +58,12 @@ pub struct Main {
     pub cache_dir_path: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MetaDb {
     pub path: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub api: Api,
     pub meta_db: MetaDb,
@@ -97,6 +98,9 @@ pub fn get_real_config_path(path: &String) -> PathBuf {
     }
 }
 
-pub fn get_text_config(model: &mut Model) -> String {
+pub fn get_text_config<T>(model: &mut Model<T>) -> String
+where
+    T: DiskClientT,
+{
     toml::to_string(&model.config).unwrap()
 }

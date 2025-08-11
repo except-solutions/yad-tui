@@ -3,6 +3,7 @@ use crate::{
         common::Widget, main_screen::previous_dir::PreviousDir, popups::login_ui::render_login_form,
     },
     config::get_text_config,
+    disk_client::DiskClientT,
     models::model::{Model, Popup},
 };
 use ratatui::layout::{Constraint, Layout, Rect};
@@ -11,7 +12,7 @@ use crate::components::main_screen::next_dir::NextDir;
 use ratatui::widgets::{Block, Clear, Paragraph};
 use ratatui::Frame;
 
-pub fn ui(model: &mut Model, frame: &mut Frame) {
+pub fn ui<T: DiskClientT>(model: &mut Model<T>, frame: &mut Frame) {
     if model.is_authenticated() {
         let [top_bar, dirs] =
             Layout::vertical([Constraint::Percentage(5), Constraint::Percentage(95)])

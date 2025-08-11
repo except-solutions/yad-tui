@@ -1,26 +1,38 @@
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
+use crate::config::Config;
+use crate::disk_client::DiskClientT;
 use crate::error::AppError;
 use crate::models::file::{File, NodeType};
 use crate::utils::common::path_buf_to_string;
 use crate::utils::dir_reader::DirReader;
+use crate::utils::file_downloader::FileDownloader;
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
+use std::sync::Arc;
 use std::thread;
 
 type NextDirSetResult = Result<Option<NextDir>, AppError>;
 type FSSender = Sender<NextDirSetResult>;
-
 #[derive(Debug, Clone)]
-pub struct FS {
+pub struct FS<T: DiskClientT> {
     pub previous_dir: Option<PreviousDir>,
     pub current_dir: CurrentDir,
     pub next_dir: Option<NextDir>,
-    pub dir_reader: DirReader,
+    pub dir_reader: Arc<DirReader<T>>,
+    pub file_downloader: Arc<FileDownloader<T>>,
+    pub config: Arc<Config>,
 }
 
-impl FS {
-    pub fn create(dir_reader: DirReader) -> Result<Self, AppError> {
+impl<T> FS<T>
+where
+    T: DiskClientT,
+{
+    pub fn create(
+        config: Arc<Config>,
+        dir_reader: Arc<DirReader<T>>,
+        file_downloader: Arc<FileDownloader<T>>,
+    ) -> Result<Self, AppError> {
         let path = PathBuf::from("/");
         let (item, items) = dir_reader.read_dir(path_buf_to_string(path.clone())?)?;
         let current_dir = CurrentDir::new(path.clone(), item, items);
@@ -39,29 +51,42 @@ impl FS {
             None
         };
 
-        Ok(Self::new(previous_dir, current_dir, next_dir, dir_reader))
+        Ok(Self::new(
+            config,
+            previous_dir,
+            current_dir,
+            next_dir,
+            dir_reader,
+            file_downloader,
+        ))
     }
 }
 
-impl FS {
+impl<T> FS<T>
+where
+    T: DiskClientT,
+{
     pub fn new(
+        config: Arc<Config>,
         previous_dir: Option<PreviousDir>,
         current_dir: CurrentDir,
         next_dir: Option<NextDir>,
-        dir_reader: DirReader,
+        dir_reader: Arc<DirReader<T>>,
+        file_downloader: Arc<FileDownloader<T>>,
     ) -> Self {
         Self {
+            config,
             next_dir,
             current_dir,
             previous_dir,
             dir_reader,
+            file_downloader,
         }
     }
 
     pub fn select_next_element_for_next_dir(&mut self, sender: FSSender) -> Result<(), AppError> {
         self.current_dir.state.select_next();
         self.next_dir = None;
-
         let c = self.clone();
 
         thread::spawn(move || {
@@ -137,7 +162,6 @@ impl FS {
 
     fn set_next_dir_from_current(&self) -> NextDirSetResult {
         let selected = self.current_dir.selected_file()?;
-
         let next_dir = if selected.file_type == NodeType::Dir {
             let mut next_path_buf = PathBuf::new();
             next_path_buf.push(&self.current_dir.path);
@@ -150,5 +174,13 @@ impl FS {
             None
         };
         Ok(next_dir)
+    }
+
+    pub fn download_selected(&self, sender: Sender<usize>) -> Result<(), AppError> {
+        // log::info!("Try download selected file: {}", self.current_dir.selected_file()?.name);
+        let selected = self.current_dir.selected_file()?;
+
+        self.file_downloader.download(sender, selected.clone())?;
+        Ok(())
     }
 }
