@@ -309,9 +309,7 @@ impl DiskClientT for DiskClient {
             .call();
 
         let remote_file_reader = self.match_response(remote_file_response, |r| r.into_reader())?;
-        // let mut result_file = File::create(local_path).unwrap();
 
-        // std::io::copy(&mut remote_file_reader, &mut result_file).unwrap();
         Ok(remote_file_reader)
     }
 }

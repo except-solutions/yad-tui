@@ -58,8 +58,7 @@ impl DiskClientT for DiskClientMock {
     }
 }
 
-#[test]
-fn test_single_file_download() {
+fn setup() -> Arc<Config> {
     let config = Arc::new(Config {
         api: Api {
             api_url: String::from("test_api_url"),
@@ -77,7 +76,14 @@ fn test_single_file_download() {
             cache_dir_path: "./tmp/cache".to_string(),
         },
     });
+    fs::create_dir_all("./tmp");
     fs::create_dir_all(config.main.sync_dir_path.clone()).unwrap();
+    config
+}
+
+#[test]
+fn test_single_file_download() {
+    let config = setup();
 
     let result = panic::catch_unwind(|| {
         let disk_client = Arc::new(DiskClientMock {
@@ -125,6 +131,71 @@ fn test_single_file_download() {
         assert!(result_file_stat.is_file());
     });
 
-    fs::remove_dir_all("./tmp").unwrap();
+    result.unwrap();
+}
+
+#[test]
+fn test_dir_download() {
+    let config = setup();
+
+    let result = panic::catch_unwind(|| {
+        let disk_client = Arc::new(DiskClientMock {
+            fake_file_path: "tests/fixtures/fake_dir.zip".to_string(),
+        });
+        let dir_reader = Arc::new(DirReader {
+            sync_dir_path: config.main.sync_dir_path.clone(),
+            disk_client: Arc::clone(&disk_client),
+        });
+
+        let (download_file_sender, _) = mpsc::channel::<usize>();
+
+        let file_downloader = FileDownloader {
+            config: config.clone(),
+            dir_reader,
+            disk_client,
+        };
+
+        let file_to_download = File {
+            name: "fake_dir.zip".to_string(),
+            file_type: NodeType::Dir,
+            state: State::Cloud,
+            cloud: Some(CloudFile {
+                path: "test_dir_name".to_string(),
+            }),
+            local: None,
+        };
+
+        let _ = file_downloader
+            .download(download_file_sender, file_to_download.clone())
+            .unwrap()
+            .join()
+            .unwrap()
+            .unwrap();
+
+        let dir_path = format!(
+            "{}{}",
+            config.main.sync_dir_path,
+            file_to_download.cloud.unwrap().path
+        );
+        let result_dir_stat = fs::metadata(dir_path.clone()).unwrap();
+        let fake_file0 = fs::metadata(format!(
+            "{}/{}",
+            dir_path.clone(),
+            "fake_file.ext".to_string()
+        ))
+        .unwrap();
+        let fake_file1 = fs::metadata(format!(
+            "{}/{}",
+            dir_path.clone(),
+            "inner_folder/inner_file.ext"
+        ))
+        .unwrap();
+
+        assert!(result_dir_stat.is_dir());
+        assert!(fake_file0.is_file());
+        assert!(fake_file1.is_file());
+    });
+
+    fs::remove_dir_all("./tmp/sync_dir/test_dir_name").unwrap();
     result.unwrap();
 }
