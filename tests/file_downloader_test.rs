@@ -76,7 +76,7 @@ fn setup() -> Arc<Config> {
             cache_dir_path: "./tmp/cache".to_string(),
         },
     });
-    fs::create_dir_all("./tmp");
+    let _ = fs::create_dir_all("./tmp");
     fs::create_dir_all(config.main.sync_dir_path.clone()).unwrap();
     config
 }
