@@ -9,13 +9,6 @@ use ureq::{Error as HTTPError, Request};
 use crate::{config::Config, meta_db::Meta};
 
 #[derive(Deserialize)]
-enum AuthResponse {
-    SuccessAuth,
-    AuthError,
-    UnknwonError,
-}
-
-#[derive(Deserialize)]
 pub struct SuccessAuth {
     pub token_type: String,
     pub access_token: String,
