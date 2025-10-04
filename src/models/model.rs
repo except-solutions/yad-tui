@@ -15,7 +15,8 @@ pub enum Popup {
     },
 }
 
-pub struct Model<T: DiskClientT + Send + Sync + 'static> {
+#[derive(Clone)]
+pub struct Model<T: DiskClientT + Clone> {
     pub is_auth: bool,
     pub top_bar: Option<TopBar>,
     pub fs: FS<T>,
@@ -26,9 +27,9 @@ pub struct Model<T: DiskClientT + Send + Sync + 'static> {
     pub disk_client: Arc<T>,
 }
 
-impl<T> fmt::Debug for Model<T>
+impl<T: DiskClientT> fmt::Debug for Model<T>
 where
-    T: DiskClientT + Send + Sync,
+    T: DiskClientT,
     T: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -42,7 +43,7 @@ where
     }
 }
 
-impl<T: DiskClientT + Sync + Send + 'static> Model<T> {
+impl<T: DiskClientT> Model<T> {
     pub fn is_authenticated(&self) -> bool {
         self.is_auth
     }

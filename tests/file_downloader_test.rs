@@ -56,6 +56,10 @@ impl DiskClientT for DiskClientMock {
         let buf_reader = BufReader::new(file);
         Ok(Box::new(buf_reader))
     }
+
+    fn update_token(&self, _new_token: String) -> Self {
+        todo!()
+    }
 }
 
 fn setup() -> Arc<Config> {

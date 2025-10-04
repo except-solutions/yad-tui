@@ -9,13 +9,6 @@ use ureq::{Error as HTTPError, Request};
 use crate::{config::Config, meta_db::Meta};
 
 #[derive(Deserialize)]
-enum AuthResponse {
-    SuccessAuth,
-    AuthError,
-    UnknwonError,
-}
-
-#[derive(Deserialize)]
 pub struct SuccessAuth {
     pub token_type: String,
     pub access_token: String,
@@ -148,6 +141,7 @@ pub trait DiskClientT: Sync + Send + Clone + 'static {
     fn set_api_token(&self, request: Request) -> Result<Request, DiskError>;
 
     fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError>;
+    fn update_token(&self, new_token: String) -> Self;
 }
 
 #[derive(Debug, Clone)]
@@ -205,6 +199,13 @@ impl DiskClient {
 }
 
 impl DiskClientT for DiskClient {
+    fn update_token(&self, new_token: String) -> Self {
+        DiskClient {
+            token: Some(new_token),
+            ..self.clone()
+        }
+    }
+
     fn auth(&self, code: String) -> Result<SuccessAuth, String> {
         // TODO: rewrite with new api match_respose, set_token etc
         let url = &format!("{}/token", self.oauth_url);
@@ -295,7 +296,7 @@ impl DiskClientT for DiskClient {
 
     fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError> {
         let fetch_download_link_response = self
-            .prepare_request(|| {
+            .prepare_request(&|| {
                 ureq::get(
                     format!("{}/resources/download?path={}", self.api_url, cloud_path).as_str(),
                 )

@@ -1,7 +1,12 @@
+use std::sync::Arc;
+
 use crate::{
     disk_client::DiskClientT,
+    error::AppError,
+    fs::FS,
     meta_db::Meta,
     models::model::{Model, Popup},
+    utils::{dir_reader::DirReader, file_downloader::FileDownloader},
 };
 
 const LOGIN_INPUT_MAX_DIGITS: u16 = 999;
@@ -56,19 +61,46 @@ pub fn send_form<T: DiskClientT>(model: &mut Model<T>, code: String) {
             model
                 .meta_db
                 .tx(true)
+                .map_err(AppError::DBError)
                 .and_then(|tx| {
                     tx.get_or_create_bucket("meta")
+                        .map_err(AppError::DBError)
                         .map(|bucket| {
                             let meta = Meta {
-                                api_token: Some(auth_response.access_token),
+                                api_token: Some(auth_response.access_token.clone()),
                             };
                             let data = serde_json::to_vec(&meta).unwrap();
                             let _ = bucket.put("meta", data);
                             meta
                         })
-                        .map(|_| {
-                            let _ = tx.commit();
+                        .and_then(|_| {
+                            let _ = tx.commit().map_err(AppError::DBError);
                             model.popup = None;
+                            model.is_auth = true;
+                            let dc = Arc::new(
+                                model.disk_client.update_token(auth_response.access_token),
+                            );
+                            model.disk_client = dc.clone();
+
+                            let dr = Arc::new(DirReader {
+                                disk_client: dc.clone(),
+                                sync_dir_path: model.fs.dir_reader.sync_dir_path.clone(),
+                            });
+
+                            let new_fd = Arc::new(FileDownloader {
+                                disk_client: dc.clone(),
+                                dir_reader: dr.clone(),
+                                config: model.fs.file_downloader.config.clone(),
+                            });
+
+                            let new_fs = FS::create(
+                                Arc::new(model.config.clone()),
+                                dr.clone(),
+                                new_fd.clone(),
+                            )?;
+
+                            model.fs = new_fs;
+                            Ok(())
                         })
                 })
                 .unwrap_or_else(|err| {

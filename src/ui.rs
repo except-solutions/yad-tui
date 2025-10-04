@@ -6,6 +6,7 @@ use crate::{
     disk_client::DiskClientT,
     models::model::{Model, Popup},
 };
+use log::warn;
 use ratatui::layout::{Constraint, Layout, Rect};
 
 use crate::components::main_screen::next_dir::NextDir;
@@ -52,8 +53,8 @@ pub fn ui<T: DiskClientT>(model: &mut Model<T>, frame: &mut Frame) {
         }
     }
 
-    match &model.popup {
-        Some(Popup::Config) => {
+    match (model.is_authenticated(), model.popup.clone()) {
+        (true, Some(Popup::Config)) => {
             let config_text = get_text_config(model);
             let title = model.config_path.display().to_string();
             let block = Block::bordered().title(title);
@@ -62,10 +63,13 @@ pub fn ui<T: DiskClientT>(model: &mut Model<T>, frame: &mut Frame) {
             frame.render_widget(Clear, area); //this clears out the background
             frame.render_widget(content, area);
         }
-        Some(Popup::LoginForm {
-            code_input,
-            error_message,
-        }) => {
+        (
+            false,
+            Some(Popup::LoginForm {
+                code_input,
+                error_message,
+            }),
+        ) => {
             render_login_form(
                 frame,
                 model.config.api.auth_link(),
@@ -73,8 +77,9 @@ pub fn ui<T: DiskClientT>(model: &mut Model<T>, frame: &mut Frame) {
                 error_message.clone(),
             );
         }
-        None => (),
-    };
+        (true, None) => (),
+        invalid_state => warn!("Invalid ui state: {invalid_state:?}"),
+    }
 }
 
 pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
