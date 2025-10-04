@@ -14,6 +14,7 @@ use std::thread;
 
 type NextDirSetResult = Result<Option<NextDir>, AppError>;
 type FSSender = Sender<NextDirSetResult>;
+
 #[derive(Debug, Clone)]
 pub struct FS<T: DiskClientT> {
     pub previous_dir: Option<PreviousDir>,

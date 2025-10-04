@@ -148,6 +148,7 @@ pub trait DiskClientT: Sync + Send + Clone + 'static {
     fn set_api_token(&self, request: Request) -> Result<Request, DiskError>;
 
     fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError>;
+    fn update_token(&self, new_token: String) -> Self;
 }
 
 #[derive(Debug, Clone)]
@@ -205,6 +206,15 @@ impl DiskClient {
 }
 
 impl DiskClientT for DiskClient {
+    //   type Client = DiskClient;
+
+    fn update_token(&self, new_token: String) -> Self {
+        DiskClient {
+            token: Some(new_token),
+            ..self.clone()
+        }
+    }
+
     fn auth(&self, code: String) -> Result<SuccessAuth, String> {
         // TODO: rewrite with new api match_respose, set_token etc
         let url = &format!("{}/token", self.oauth_url);
@@ -253,7 +263,7 @@ impl DiskClientT for DiskClient {
     }
 
     fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
-        let response = self.prepare_request(|| ureq::get(&self.api_url))?.call();
+        let response = self.prepare_request(&|| ureq::get(&self.api_url))?.call();
         self.match_response::<DiskMetaResponse>(response, into_json)
     }
 
@@ -271,7 +281,7 @@ impl DiskClientT for DiskClient {
             .unwrap_or("".to_string());
         let optional_query_param = offset_q + &limit_q;
         let response = self
-            .prepare_request(|| {
+            .prepare_request(&|| {
                 ureq::get(
                     format!(
                         "{}/resources?path={}{}",
@@ -295,7 +305,7 @@ impl DiskClientT for DiskClient {
 
     fn file_reader(&self, cloud_path: String) -> Result<Box<dyn Read + Send + Sync>, DiskError> {
         let fetch_download_link_response = self
-            .prepare_request(|| {
+            .prepare_request(&|| {
                 ureq::get(
                     format!("{}/resources/download?path={}", self.api_url, cloud_path).as_str(),
                 )
@@ -305,7 +315,7 @@ impl DiskClientT for DiskClient {
         let download_link =
             self.match_response::<DownloadHref>(fetch_download_link_response, into_json)?;
         let remote_file_response = self
-            .prepare_request(|| ureq::get(&download_link.href))?
+            .prepare_request(&|| ureq::get(&download_link.href))?
             .call();
 
         let remote_file_reader = self.match_response(remote_file_response, |r| r.into_reader())?;
