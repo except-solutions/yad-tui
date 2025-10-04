@@ -57,7 +57,7 @@ impl DiskClientT for DiskClientMock {
         Ok(Box::new(buf_reader))
     }
 
-    fn update_token(&self, new_token: String) -> Self {
+    fn update_token(&self, _new_token: String) -> Self {
         todo!()
     }
 }

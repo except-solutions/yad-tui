@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     disk_client::DiskClientT,
+    error::AppError,
     fs::FS,
     meta_db::Meta,
     models::model::{Model, Popup},
@@ -60,8 +61,10 @@ pub fn send_form<T: DiskClientT>(model: &mut Model<T>, code: String) {
             model
                 .meta_db
                 .tx(true)
+                .map_err(AppError::DBError)
                 .and_then(|tx| {
                     tx.get_or_create_bucket("meta")
+                        .map_err(AppError::DBError)
                         .map(|bucket| {
                             let meta = Meta {
                                 api_token: Some(auth_response.access_token.clone()),
@@ -70,8 +73,8 @@ pub fn send_form<T: DiskClientT>(model: &mut Model<T>, code: String) {
                             let _ = bucket.put("meta", data);
                             meta
                         })
-                        .map(|_| {
-                            let _ = tx.commit();
+                        .and_then(|_| {
+                            let _ = tx.commit().map_err(AppError::DBError);
                             model.popup = None;
                             model.is_auth = true;
                             let dc = Arc::new(
@@ -94,10 +97,10 @@ pub fn send_form<T: DiskClientT>(model: &mut Model<T>, code: String) {
                                 Arc::new(model.config.clone()),
                                 dr.clone(),
                                 new_fd.clone(),
-                            )
-                            .unwrap();
+                            )?;
 
                             model.fs = new_fs;
+                            Ok(())
                         })
                 })
                 .unwrap_or_else(|err| {
