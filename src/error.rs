@@ -14,7 +14,7 @@ pub enum AppError {
     MissingSelectedElelement,
     MultipleErrors(Vec<AppError>),
     LogicalError(String),
-    DBError(JammError)
+    DBError(JammError),
 }
 
 impl AppError {
