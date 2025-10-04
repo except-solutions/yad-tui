@@ -1,6 +1,6 @@
 use crate::components::main_screen::top_bar::TopBar;
 use crate::config::Config;
-use crate::disk_client::DiskClientT;
+use crate::disk_client::{DiskClient, DiskClientT};
 use crate::fs::FS;
 use jammdb::DB;
 use std::sync::Arc;
@@ -38,7 +38,7 @@ where
             .field("popup", &self.popup)
             .field("config", &self.config)
             .field("config_path", &self.config_path)
-            .field("disk_client", &self.disk_client)
+            //            .field("disk_client", &self.disk_client)
             .finish()
     }
 }
@@ -47,4 +47,9 @@ impl<T: DiskClientT> Model<T> {
     pub fn is_authenticated(&self) -> bool {
         self.is_auth
     }
+
+    //    pub fn update_disk_client(&mut self) where T: From<DiskClient> {
+    //        let x = DiskClient { api_url: String::from(""), oauth_url: String::from(""), client_id: String::from(""), client_secret: String::from(""), token: Some(String::from("")) };
+    //        self.disk_client = Arc::new(x.into());
+    //    }
 }

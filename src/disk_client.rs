@@ -254,7 +254,7 @@ impl DiskClientT for DiskClient {
     }
 
     fn disk_meta(&self) -> Result<DiskMetaResponse, DiskError> {
-        let response = self.prepare_request(|| ureq::get(&self.api_url))?.call();
+        let response = self.prepare_request(&|| ureq::get(&self.api_url))?.call();
         self.match_response::<DiskMetaResponse>(response, into_json)
     }
 
@@ -272,7 +272,7 @@ impl DiskClientT for DiskClient {
             .unwrap_or("".to_string());
         let optional_query_param = offset_q + &limit_q;
         let response = self
-            .prepare_request(|| {
+            .prepare_request(&|| {
                 ureq::get(
                     format!(
                         "{}/resources?path={}{}",
@@ -306,7 +306,7 @@ impl DiskClientT for DiskClient {
         let download_link =
             self.match_response::<DownloadHref>(fetch_download_link_response, into_json)?;
         let remote_file_response = self
-            .prepare_request(|| ureq::get(&download_link.href))?
+            .prepare_request(&|| ureq::get(&download_link.href))?
             .call();
 
         let remote_file_reader = self.match_response(remote_file_response, |r| r.into_reader())?;
