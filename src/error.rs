@@ -14,7 +14,7 @@ pub enum AppError {
     MissingSelectedElelement,
     MultipleErrors(Vec<AppError>),
     LogicalError(String),
-    DBError(JammError)
+    DBError(JammError),
 }
 
 impl AppError {
@@ -30,12 +30,24 @@ impl fmt::Display for AppError {
             AppError::FSErrors(fs_error) => write!(f, "{}", fs_error),
             AppError::InvalidFileName(error) => write!(f, "{}", error),
             AppError::InvalidPathToDelete(error) => write!(f, "{}", error),
-            AppError::ConvertOsStringToStringErr(error) => write!(f, "Convert os string to string error {error:?}"),
-            AppError::ConvertPathBufToStr => write!(f, "Invalid conver path buf to string: {}", AppError::ConvertPathBufToStr),
-            AppError::MissingSelectedElelement => write!(f, "Missing select element: {}", AppError::MissingSelectedElelement),
-            AppError::MultipleErrors(app_errors) => write!(f, "Multiple app errors: {app_errors:?}"),
+            AppError::ConvertOsStringToStringErr(error) => {
+                write!(f, "Convert os string to string error {error:?}")
+            }
+            AppError::ConvertPathBufToStr => write!(
+                f,
+                "Invalid conver path buf to string: {}",
+                AppError::ConvertPathBufToStr
+            ),
+            AppError::MissingSelectedElelement => write!(
+                f,
+                "Missing select element: {}",
+                AppError::MissingSelectedElelement
+            ),
+            AppError::MultipleErrors(app_errors) => {
+                write!(f, "Multiple app errors: {app_errors:?}")
+            }
             AppError::LogicalError(error) => write!(f, "Logical error: {}", error),
-            AppError::DBError(error) => write!(f, "DB error: {}", error)
+            AppError::DBError(error) => write!(f, "DB error: {}", error),
         }
     }
 }
