@@ -1,3 +1,6 @@
+use yad_tui::disk_client::DirItems;
+use yad_tui::disk_client::DirItem;
+use yad_tui::workers::update_current_dir::UpdateCurrentDir;
 use ratatui::{
     crossterm::{
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -12,7 +15,7 @@ use std::{
     sync::Arc,
 };
 
-use yad_tui::{channels::DownloadFileChannel, ui::ui};
+use yad_tui::{channels::{RefreshDirChannel, DownloadFileChannel}, components::main_screen::current_dir::CurrentDir, ui::ui, workers::update_current_dir};
 use yad_tui::{
     channels::{Channel, Channels, ReadNextDirChannel},
     components::main_screen::next_dir::NextDir,
@@ -89,9 +92,19 @@ fn main() -> io::Result<()> {
         receiver: download_file_receiver,
     };
 
+    let (chg_open_dir_sender, chg_open_dir_receiver) =  mpsc::channel::<(DirItem, DirItems)>();
+
+
+    let refresh_dir_ch = RefreshDirChannel {
+        sender: chg_open_dir_sender,
+        receiver: chg_open_dir_receiver
+
+    };
+
     let channels = Channels {
         read_next_dir_ch: ch,
         download_file_channel,
+        refresh_dir_ch
     };
 
     let config_pointer = Arc::new(config.clone());
@@ -133,6 +146,8 @@ fn main() -> io::Result<()> {
 
     let mut current_message = handle_events(&model)?;
 
+    let mut update_current_dir = UpdateCurrentDir::new();
+
     while current_message.is_some() {
         terminal.draw(|f| ui(&mut model, f))?;
         current_message = match handle_events(&model)? {
@@ -143,6 +158,9 @@ fn main() -> io::Result<()> {
         let _ = &channels.read_next_dir_ch.handle(&mut model);
         // TODO: Impl handling download progress
         channels.download_file_channel.handle(&mut model);
+        update_current_dir = update_current_dir.update_current_dir(&model, channels.refresh_dir_ch.sender.clone());
+        channels.read_next_dir_ch.handle(&mut model);
+        channels.refresh_dir_ch.handle(&mut model);
     }
 
     disable_raw_mode()?;

@@ -29,8 +29,7 @@ pub struct Model<T: DiskClientT + Clone> {
 
 impl<T: DiskClientT> fmt::Debug for Model<T>
 where
-    T: DiskClientT,
-    T: std::fmt::Debug,
+    T: DiskClientT + std::fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Model")
