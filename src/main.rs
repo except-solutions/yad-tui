@@ -143,9 +143,7 @@ fn main() -> io::Result<()> {
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
-
     let mut current_message = handle_events(&model)?;
-
     let mut update_current_dir = UpdateCurrentDir::new();
 
     while current_message.is_some() {
@@ -158,7 +156,7 @@ fn main() -> io::Result<()> {
         let _ = &channels.read_next_dir_ch.handle(&mut model);
         // TODO: Impl handling download progress
         channels.download_file_channel.handle(&mut model);
-        update_current_dir = update_current_dir.update_current_dir(&model, channels.refresh_dir_ch.sender.clone());
+        update_current_dir = update_current_dir.update(&model, channels.refresh_dir_ch.sender.clone());
         channels.read_next_dir_ch.handle(&mut model);
         channels.refresh_dir_ch.handle(&mut model);
     }
