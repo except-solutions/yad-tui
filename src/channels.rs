@@ -11,7 +11,7 @@ use crate::{
 pub struct Channels {
     pub read_next_dir_ch: ReadNextDirChannel,
     pub download_file_channel: DownloadFileChannel,
-    pub refresh_dir_ch: RefreshDirChannel
+    //pub refresh_dir_ch: RefreshDirChannel
 }
 
 #[derive(Debug)]
@@ -83,12 +83,3 @@ impl Channel for RefreshDirChannel {
     }
 }
 
-// #[derive(Debug)]
-// pub struct FetchCurrentDirFilesChannel {
-//     fn handle<T>(&self, _: &mut Model<T>)
-//         where T: DiskClientT,
-//     {
-// 
-//     }
-// }
-// 

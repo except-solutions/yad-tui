@@ -6,6 +6,8 @@ pub trait Worker {
 
     type SenderValueType;
 
-    fn interval() -> Duration;
-    fn run<T>(model: &Model<T>, sender: Sender<Self::SenderValueType>) where T: DiskClientT;
+    fn interval(&self) -> Duration;
+    fn previous_run_time(&self) -> u64;
+    fn run<T>(&self, model: &mut Model<T>) -> Self where T: DiskClientT;
+    fn handle(self) -> Self;
 }

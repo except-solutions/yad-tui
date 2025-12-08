@@ -1,3 +1,5 @@
+use yad_tui::workers::scheduler::Scheduler;
+use yad_tui::workers::worker::Worker;
 use yad_tui::disk_client::DirItems;
 use yad_tui::disk_client::DirItem;
 use yad_tui::workers::update_current_dir::UpdateCurrentDir;
@@ -44,7 +46,8 @@ extern crate rust_i18n;
 i18n!("locales");
 
 fn main() -> io::Result<()> {
-    let args = parse_args();
+    let parse_args = parse_args();
+    let args = parse_args;
     let config = get_toml_config(&args.conf);
 
     rust_i18n::set_locale(config.main.lang.as_str());
@@ -104,7 +107,7 @@ fn main() -> io::Result<()> {
     let channels = Channels {
         read_next_dir_ch: ch,
         download_file_channel,
-        refresh_dir_ch
+    //    refresh_dir_ch
     };
 
     let config_pointer = Arc::new(config.clone());
@@ -137,6 +140,10 @@ fn main() -> io::Result<()> {
         channels,
     );
 
+    let update_current_dir_worker = UpdateCurrentDir::new(&refresh_dir_ch);
+
+//    let scheduler = Scheduler { workers: vec![update_current_dir_worker] };
+
     info!("Start application");
     info!("Initialize application model");
     debug!("Initializated model: {:?}", model);
@@ -144,7 +151,7 @@ fn main() -> io::Result<()> {
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     let mut current_message = handle_events(&model)?;
-    let mut update_current_dir = UpdateCurrentDir::new();
+//    let mut update_current_dir = UpdateCurrentDir::new();
 
     while current_message.is_some() {
         terminal.draw(|f| ui(&mut model, f))?;
@@ -156,9 +163,20 @@ fn main() -> io::Result<()> {
         let _ = &channels.read_next_dir_ch.handle(&mut model);
         // TODO: Impl handling download progress
         channels.download_file_channel.handle(&mut model);
-        update_current_dir = update_current_dir.update(&model, channels.refresh_dir_ch.sender.clone());
+ //       update_current_dir = update_current_dir.update(&model, channels.refresh_dir_ch.sender.clone());
         channels.read_next_dir_ch.handle(&mut model);
-        channels.refresh_dir_ch.handle(&mut model);
+
+
+//        update_current_dir_worker.run(&mut model);
+        refresh_dir_ch.handle(&mut model);
+//        scheduler.run(&mut model);
+
+
+
+        update_current_dir_worker.run(&mut model);
+
+   //     channels.refresh_dir_ch.handle(&mut model);
+
     }
 
     disable_raw_mode()?;
