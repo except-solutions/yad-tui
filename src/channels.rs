@@ -76,7 +76,7 @@ impl Channel for RefreshDirChannel {
     {
         if let Ok(dir_item) = &self.receiver.try_recv() {
             let (current, _) = dir_item;
-            println!("{}", current.name.clone());
+            println!("dir found in channel {}", current.name.clone());
             ();
             ()
         };

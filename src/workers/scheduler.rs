@@ -4,36 +4,33 @@ use crate::disk_client::DiskClientT;
 use crate::models::model::Model;
 use crate::workers::worker::Worker;
 
-pub struct Scheduler<'a, T: Worker> {
+pub struct Scheduler<T: Worker> {
 
-    pub workers: &'a Vec<T>
+    pub workers: Vec<T>
 }
 
-impl <'a, T: Worker> Scheduler<'a, T> {
+impl <T: Worker> Scheduler<T> {
     
-    pub fn run<D>(&self, model: &mut Model<D>) -> Vec<T> where D: DiskClientT,
+    pub fn run<D>(&mut self, model: &mut Model<D>) where D: DiskClientT,
     {
-        let updated_workers: Vec<T> = self
+        self.workers = self
             .workers
-            .into_iter()
+            .iter()
             .map(|w| {
-
                 let current_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
                 let interval = w.interval().as_secs();
 
                 let delta = current_time - w.previous_run_time();
 
-                if delta > interval {
+                let runned_or_skipped_worker = if !w.blocked() && delta > interval {
                    w.run(model)
                 } else {
                     w.clone()
-                }
+                };
+
+                runned_or_skipped_worker.handle(model)
             })
             .collect();
-        
-        updated_workers
-        
     }
-
 }
 

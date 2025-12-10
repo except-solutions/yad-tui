@@ -159,9 +159,7 @@
 
         let update_current_dir_worker = UpdateCurrentDir::new(&refresh_dir_ch);
 
-        let mut workers = vec![update_current_dir_worker];
-
-        let mut scheduler = Scheduler { workers:  &workers.clone() };
+        let mut scheduler = Scheduler { workers:  vec![update_current_dir_worker] };
 
         info!("Initialize application model");
         debug!("Initializated model: {:?}", model);
@@ -186,10 +184,10 @@
 
 
     //        update_current_dir_worker.run(&mut model);
-            refresh_dir_ch.handle(&mut model);
-            workers = scheduler.run(&mut model);
+//            refresh_dir_ch.handle(&mut model);
+            scheduler.run(&mut model);
 
-            scheduler = Scheduler { workers: &workers };
+//            scheduler = Scheduler { workers: &workers };
 
 
     //        update_current_dir_worker.run(&mut model);

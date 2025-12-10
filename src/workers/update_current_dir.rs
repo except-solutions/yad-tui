@@ -1,3 +1,4 @@
+use crate::components::main_screen::current_dir::CurrentDir;
 use std::time::UNIX_EPOCH;
 use std::time::SystemTime;
 use crate::channels::RefreshDirChannel;
@@ -26,6 +27,7 @@ impl <'a>Worker for UpdateCurrentDir<'a> {
         where 
             T: DiskClientT,
     {
+        let current_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         let disk_client = model.clone().disk_client;
         let current_dir_path = model.fs.current_dir.path.clone().into_os_string();
         let sender = self.channel.sender.clone();
@@ -43,23 +45,31 @@ impl <'a>Worker for UpdateCurrentDir<'a> {
                 Ok::<(), AppError>(())
         });
         UpdateCurrentDir {
-            previous_update_time: self.previous_update_time,
+            previous_update_time: current_time,
             blocked: true,
             channel: self.channel
         }
     }
 
     fn interval(&self) -> Duration {
-        Duration::new(60, 0)
+        Duration::new(5, 0)
     }
     
     fn previous_run_time(&self) -> u64 {
         self.previous_update_time
     }
 
-    fn handle(self) -> Self {
+    fn handle<T>(self, model: &mut Model<T>) -> Self where T: DiskClientT {
+//        println!("Handler ");
+        if let Ok(d) = self.channel.receiver.try_recv() {
 
-        if let Ok(_) = self.channel.receiver.try_recv() {
+            println!("dir: {:?}", d.0);
+
+            //model.fs.current_dir = model.fs.current_dir.clone()
+            //
+            // let new_dir = CurrentDir::new(model.fs.current_dir.path.clone(), d.0, d.1);
+
+
             UpdateCurrentDir {
                 previous_update_time: self.previous_update_time,
                 blocked: false,
@@ -70,6 +80,9 @@ impl <'a>Worker for UpdateCurrentDir<'a> {
         }
     }
 
+    fn blocked(&self) -> bool {
+        self.blocked
+    }
 }
 
 impl <'a>UpdateCurrentDir<'a> {
