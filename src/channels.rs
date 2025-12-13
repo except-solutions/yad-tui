@@ -1,10 +1,19 @@
-use crate::disk_client::DirItems;
+use crate::utils::common::AppErrorUnit;
 use crate::disk_client::DirItem;
+use crate::disk_client::DirItems;
+use crate::models::file::File;
 use core::time;
-use std::{sync::mpsc::{Receiver, Sender}, thread, time::SystemTime};
+use std::path::PathBuf;
+use std::{
+    sync::mpsc::{Receiver, Sender},
+    thread,
+    time::SystemTime,
+};
 
 use crate::{
-    components::main_screen::{current_dir::CurrentDir, next_dir::NextDir}, disk_client::DiskClientT, error::AppError,
+    components::main_screen::{current_dir::CurrentDir, next_dir::NextDir},
+    disk_client::DiskClientT,
+    error::AppError,
     models::model::Model,
 };
 
@@ -16,8 +25,8 @@ pub struct Channels {
 
 #[derive(Debug)]
 pub struct ReadNextDirChannel {
-    pub sender: Sender<Result<Option<NextDir>, AppError>>,
-    pub receiver: Receiver<Result<Option<NextDir>, AppError>>,
+    pub sender: Sender<Result<Option<NextDir>, AppErrorUnit>>,
+    pub receiver: Receiver<Result<Option<NextDir>, AppErrorUnit>>,
 }
 
 pub trait Channel {
@@ -64,9 +73,8 @@ impl Channel for DownloadFileChannel {
 
 #[derive(Debug)]
 pub struct RefreshDirChannel {
-
-    pub sender: Sender<(DirItem, DirItems)>,
-    pub receiver: Receiver<(DirItem, DirItems)>,
+    pub sender: Sender<(PathBuf, (File, Vec<File>))>,
+    pub receiver: Receiver<(PathBuf, (File, Vec<File>))>,
 }
 
 impl Channel for RefreshDirChannel {
@@ -74,12 +82,7 @@ impl Channel for RefreshDirChannel {
     where
         T: DiskClientT,
     {
-        if let Ok(dir_item) = &self.receiver.try_recv() {
-            let (current, _) = dir_item;
-            println!("dir found in channel {}", current.name.clone());
-            ();
-            ()
-        };
+
+        unimplemented!("Should be implemented in worker only!");
     }
 }
-

@@ -1,3 +1,4 @@
+use crate::utils::common::AppErrorUnit;
 use std::{
     collections::{HashMap, HashSet},
     fs::{self, ReadDir},
@@ -21,7 +22,7 @@ pub struct DirReader<T: DiskClientT> {
 }
 
 impl<T: DiskClientT> DirReader<T> {
-    pub fn read_dir(&self, path: String) -> Result<(File, Vec<File>), AppError> {
+    pub fn read_dir(&self, path: String) -> Result<(File, Vec<File>), AppErrorUnit> {
         let path_buf = PathBuf::from(self.sync_dir_path.clone() + "/" + path.as_str());
 
         let cloud_dir = self.fetch_cloud_dirs(path.clone());
@@ -88,7 +89,7 @@ impl<T: DiskClientT> DirReader<T> {
         }
     }
 
-    fn fetch_cloud_dirs(&self, path: String) -> Result<ItemResponse, AppError> {
+    fn fetch_cloud_dirs(&self, path: String) -> Result<ItemResponse, AppErrorUnit> {
         self.disk_client
             .item(path.as_str(), None, Some(1000))
             .map_err(AppError::DiskErrors)
@@ -98,7 +99,7 @@ impl<T: DiskClientT> DirReader<T> {
         &self,
         local_dir: ReadDir,
         cloud_dir: HashMap<String, DirItem>,
-    ) -> Result<Vec<File>, AppError> {
+    ) -> Result<Vec<File>, AppErrorUnit> {
         let (valid_entites, invalid_entities): (Vec<Result<File, _>>, Vec<Result<_, Error>>) =
             local_dir
                 .map(|entry| {

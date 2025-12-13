@@ -88,7 +88,7 @@ impl ItemResponse {
                 modified: self.modified,
                 revision: self.revision,
             },
-            self._embedded
+            self._embedded,
         )
     }
 }

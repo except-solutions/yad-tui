@@ -1,7 +1,8 @@
+use crate::error::AppError;
 use crate::disk_client::DiskClientT;
 use std::sync::Arc;
 
-use crate::error::AppError;
+use crate::error::AppErrorUnit;
 use crate::models::file::{File, NodeType};
 use crate::utils::progress_file_reader::ProgressFileReader;
 use crate::{config::Config, utils::dir_reader::DirReader};
@@ -25,7 +26,7 @@ impl<T: DiskClientT> FileDownloader<T> {
         &self,
         sender: Sender<usize>,
         file_to_download: File,
-    ) -> Result<thread::JoinHandle<Result<(), AppError>>, AppError> {
+    ) -> Result<thread::JoinHandle<Result<(), AppErrorUnit>>, AppErrorUnit> {
         if let Some(cloud_file) = file_to_download.cloud.clone() {
             let unix_time = SystemTime::now().duration_since(UNIX_EPOCH);
             let file_path = &cloud_file.path;
@@ -56,7 +57,7 @@ impl<T: DiskClientT> FileDownloader<T> {
 
                 let disk_file_reader = disk_client
                     .file_reader(cloud_file.path.clone())
-                    .map_err(AppError::DiskErrors)?;
+                    .map_err(AppError::DiskErrors::<()>)?;
 
                 let mut wrapper = ProgressFileReader {
                     bytes_readed: 0,
@@ -114,7 +115,7 @@ impl<T: DiskClientT> FileDownloader<T> {
                     );
                 };
 
-                Result::<(), AppError>::Ok(())
+                Result::<(), AppErrorUnit>::Ok(())
             }))
         } else {
             Err(AppError::LogicalError(format!(

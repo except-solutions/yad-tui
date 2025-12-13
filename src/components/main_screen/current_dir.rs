@@ -1,3 +1,4 @@
+use crate::utils::common::AppErrorUnit;
 use crate::error::AppError;
 use crate::models::file::File;
 use ratatui::layout::Rect;
@@ -30,6 +31,15 @@ impl CurrentDir {
         }
     }
 
+    pub fn update(&self, item: File, items: Vec<File>) -> Self {
+        Self {
+            path: self.path.clone(),
+            item: item,
+            items: items,
+            state: self.state.clone(),
+        }
+    }
+
     pub fn render(&mut self, area: Rect, frame: &mut Frame) {
         let header: Block = Block::new()
             .title(Line::raw(self.path.to_string_lossy()).centered())
@@ -48,7 +58,7 @@ impl CurrentDir {
         frame.render_stateful_widget(current_dirs_list, area, &mut self.state)
     }
 
-    pub fn selected_file(&self) -> Result<File, AppError> {
+    pub fn selected_file(&self) -> Result<File, AppErrorUnit> {
         let list_item_state = self
             .state
             .selected()
