@@ -4,7 +4,7 @@ use jammdb::DB;
 use yad_tui::{
     components::main_screen::current_dir::CurrentDir,
     config::{Api, Config, DebugLevel, Main, MetaDb},
-    disk_client::{DirItem, DirItems, DiskClientT, ItemResponse},
+    disk_client::{DiskClientT, ItemResponse},
     fs::FS,
     models::{
         file::{File, NodeType, State},
