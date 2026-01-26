@@ -74,7 +74,7 @@ pub fn send_form<T: DiskClientT>(model: &mut Model<T>, code: String) {
                             meta
                         })
                         .and_then(|_| {
-                            let _ = tx.commit().map_err(AppError::DBError);
+                            let _ = tx.commit().map_err(AppError::DBError::<()>);
                             model.popup = None;
                             model.is_auth = true;
                             let dc = Arc::new(

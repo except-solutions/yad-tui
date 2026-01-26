@@ -2,9 +2,9 @@ use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::config::Config;
 use crate::disk_client::DiskClientT;
-use crate::error::AppError;
 use crate::models::file::{File, NodeType};
 use crate::utils::common::path_buf_to_string;
+use crate::utils::common::AppErrorUnit;
 use crate::utils::dir_reader::DirReader;
 use crate::utils::file_downloader::FileDownloader;
 use std::path::PathBuf;
@@ -12,7 +12,7 @@ use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::thread;
 
-type NextDirSetResult = Result<Option<NextDir>, AppError>;
+type NextDirSetResult = Result<Option<NextDir>, AppErrorUnit>;
 type FSSender = Sender<NextDirSetResult>;
 
 #[derive(Debug, Clone)]
@@ -33,8 +33,9 @@ where
         config: Arc<Config>,
         dir_reader: Arc<DirReader<T>>,
         file_downloader: Arc<FileDownloader<T>>,
-    ) -> Result<Self, AppError> {
-        let path = PathBuf::from("/");
+    ) -> Result<Self, AppErrorUnit> {
+        let path_buf = PathBuf::from("/");
+        let path = path_buf;
         let (item, items) = dir_reader.read_dir(path_buf_to_string(path.clone())?)?;
         let current_dir = CurrentDir::new(path.clone(), item, items);
         let previous_dir = None;
@@ -85,7 +86,10 @@ where
         }
     }
 
-    pub fn select_next_element_for_next_dir(&mut self, sender: FSSender) -> Result<(), AppError> {
+    pub fn select_next_element_for_next_dir(
+        &mut self,
+        sender: FSSender,
+    ) -> Result<(), AppErrorUnit> {
         self.current_dir.state.select_next();
         self.next_dir = None;
         let c = self.clone();
@@ -100,7 +104,7 @@ where
     pub fn select_previous_element_for_next_dir(
         &mut self,
         sender: FSSender,
-    ) -> Result<(), AppError> {
+    ) -> Result<(), AppErrorUnit> {
         self.current_dir.state.select_previous();
         self.next_dir = None;
 
@@ -113,7 +117,7 @@ where
         Ok(())
     }
 
-    pub fn open_selected(&mut self) -> Result<(), AppError> {
+    pub fn open_selected(&mut self) -> Result<(), AppErrorUnit> {
         let selected = &self.current_dir.selected_file()?;
 
         if selected.is_dir() {
@@ -138,7 +142,7 @@ where
         Ok(())
     }
 
-    pub fn open_previous(&mut self) -> Result<(), AppError> {
+    pub fn open_previous(&mut self) -> Result<(), AppErrorUnit> {
         if let Some(previous_dir) = &self.previous_dir {
             let (current_item, current_dir_items) = self
                 .dir_reader
@@ -177,7 +181,7 @@ where
         Ok(next_dir)
     }
 
-    pub fn download_selected(&self, sender: Sender<usize>) -> Result<(), AppError> {
+    pub fn download_selected(&self, sender: Sender<usize>) -> Result<(), AppErrorUnit> {
         // log::info!("Try download selected file: {}", self.current_dir.selected_file()?.name);
         let selected = self.current_dir.selected_file()?;
 

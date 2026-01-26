@@ -7,7 +7,7 @@ local liblldb_path = codelldb_root .. "lldb/lib/liblldb.so"
 dap.adapters.lldb = {
     type = "executable",
     name = "lldb",
-    command = "lldb-vscode"
+    command = "~/.local/share/nvim/mason/packages/codelldb/extension/adapter/codelldb"
 }
 
 dap.adapters.codelldb = {

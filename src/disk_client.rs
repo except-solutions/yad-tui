@@ -52,7 +52,7 @@ impl DirItem {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct DirItems {
     pub limit: u32,
     pub offset: u32,
@@ -60,7 +60,7 @@ pub struct DirItems {
     pub items: Vec<DirItem>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct ItemResponse {
     pub name: String,
     pub resource_id: String,
@@ -75,6 +75,21 @@ pub struct ItemResponse {
 impl ItemResponse {
     pub fn is_dir(&self) -> bool {
         &self.r#type == "dir"
+    }
+
+    pub fn as_tuple(self) -> (DirItem, DirItems) {
+        (
+            DirItem {
+                name: self.name,
+                resource_id: self.resource_id,
+                path: self.path,
+                r#type: self.r#type,
+                created: self.created,
+                modified: self.modified,
+                revision: self.revision,
+            },
+            self._embedded,
+        )
     }
 }
 

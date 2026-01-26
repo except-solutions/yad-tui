@@ -1,19 +1,22 @@
+use crate::models::file::File;
+use crate::utils::common::AppErrorUnit;
+use std::path::PathBuf;
 use std::sync::mpsc::{Receiver, Sender};
 
 use crate::{
-    components::main_screen::next_dir::NextDir, disk_client::DiskClientT, error::AppError,
-    models::model::Model,
+    components::main_screen::next_dir::NextDir, disk_client::DiskClientT, models::model::Model,
 };
 
 pub struct Channels {
     pub read_next_dir_ch: ReadNextDirChannel,
     pub download_file_channel: DownloadFileChannel,
+    //pub refresh_dir_ch: RefreshDirChannel
 }
 
 #[derive(Debug)]
 pub struct ReadNextDirChannel {
-    pub sender: Sender<Result<Option<NextDir>, AppError>>,
-    pub receiver: Receiver<Result<Option<NextDir>, AppError>>,
+    pub sender: Sender<Result<Option<NextDir>, AppErrorUnit>>,
+    pub receiver: Receiver<Result<Option<NextDir>, AppErrorUnit>>,
 }
 
 pub trait Channel {
@@ -55,5 +58,20 @@ impl Channel for DownloadFileChannel {
             // TODO: Add downloaded bytes in model
             // bytes.clone();
         };
+    }
+}
+
+#[derive(Debug)]
+pub struct RefreshDirChannel {
+    pub sender: Sender<(PathBuf, (File, Vec<File>))>,
+    pub receiver: Receiver<(PathBuf, (File, Vec<File>))>,
+}
+
+impl Channel for RefreshDirChannel {
+    fn handle<T>(&self, _model: &mut Model<T>)
+    where
+        T: DiskClientT,
+    {
+        unimplemented!("Should be implemented in worker only!");
     }
 }

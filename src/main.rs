@@ -1,3 +1,10 @@
+use std::path::PathBuf;
+use yad_tui::error::AppErrorUnit;
+use yad_tui::models::file::File;
+use yad_tui::workers::scheduler::Scheduler;
+
+use yad_tui::workers::update_current_dir_worker::UpdateCurrentDirWorker;
+
 use ratatui::{
     crossterm::{
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -5,43 +12,58 @@ use ratatui::{
     },
     prelude::*,
 };
+
 use std::sync::mpsc;
+
 use std::{
     fs,
     io::{self, stdout},
     sync::Arc,
 };
 
-use yad_tui::{channels::DownloadFileChannel, ui::ui};
+use yad_tui::{
+    channels::{DownloadFileChannel, RefreshDirChannel},
+    ui::ui,
+};
+
 use yad_tui::{
     channels::{Channel, Channels, ReadNextDirChannel},
     components::main_screen::next_dir::NextDir,
-    error::AppError,
     meta_db::init_db,
 };
+
 use yad_tui::{cli::parse_args, disk_client::DiskClient};
+
 use yad_tui::{
     components::main_screen::top_bar::TopBar,
     config::{get_real_config_path, get_toml_config},
     models::disk_meta::DiskMeta,
 };
+
 use yad_tui::{disk_client::DiskClientT, update::update, utils::file_downloader::FileDownloader};
+
 use yad_tui::{events::handle_events, utils::dir_reader::DirReader};
 
 use log::{debug, info};
+
 use log4rs::append::file::FileAppender;
+
 use log4rs::config::{Appender, Config, Root};
+
 use log4rs::encode::pattern::PatternEncoder;
+
 use yad_tui::fs::FS;
+
 use yad_tui::models::model::{Model, Popup};
 
 #[macro_use]
-extern crate rust_i18n;
+pub(crate) extern crate rust_i18n;
 
 i18n!("locales");
 
-fn main() -> io::Result<()> {
-    let args = parse_args();
+pub(crate) fn main() -> io::Result<()> {
+    let parse_args = parse_args();
+    let args = parse_args;
     let config = get_toml_config(&args.conf);
 
     rust_i18n::set_locale(config.main.lang.as_str());
@@ -75,7 +97,7 @@ fn main() -> io::Result<()> {
         TopBar { disk_meta }
     });
 
-    let (fs_sender, fs_receiver) = mpsc::channel::<Result<Option<NextDir>, AppError>>();
+    let (fs_sender, fs_receiver) = mpsc::channel::<Result<Option<NextDir>, AppErrorUnit>>();
 
     let ch = ReadNextDirChannel {
         sender: fs_sender,
@@ -89,9 +111,18 @@ fn main() -> io::Result<()> {
         receiver: download_file_receiver,
     };
 
+    let (chg_open_dir_sender, chg_open_dir_receiver) =
+        mpsc::channel::<(PathBuf, (File, Vec<File>))>();
+
+    let refresh_dir_ch = RefreshDirChannel {
+        sender: chg_open_dir_sender,
+        receiver: chg_open_dir_receiver,
+    };
+
     let channels = Channels {
         read_next_dir_ch: ch,
         download_file_channel,
+        //    refresh_dir_ch
     };
 
     let config_pointer = Arc::new(config.clone());
@@ -124,13 +155,17 @@ fn main() -> io::Result<()> {
         channels,
     );
 
-    info!("Start application");
+    let update_current_dir_worker = UpdateCurrentDirWorker::new(&refresh_dir_ch);
+
+    let mut scheduler = Scheduler {
+        workers: vec![update_current_dir_worker],
+    };
+
     info!("Initialize application model");
     debug!("Initializated model: {:?}", model);
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
-
     let mut current_message = handle_events(&model)?;
 
     while current_message.is_some() {
@@ -143,6 +178,8 @@ fn main() -> io::Result<()> {
         let _ = &channels.read_next_dir_ch.handle(&mut model);
         // TODO: Impl handling download progress
         channels.download_file_channel.handle(&mut model);
+        channels.read_next_dir_ch.handle(&mut model);
+        scheduler.run(&mut model);
     }
 
     disable_raw_mode()?;
