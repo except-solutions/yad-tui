@@ -1,10 +1,10 @@
-use crate::utils::common::AppErrorUnit;
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::config::Config;
 use crate::disk_client::DiskClientT;
 use crate::models::file::{File, NodeType};
 use crate::utils::common::path_buf_to_string;
+use crate::utils::common::AppErrorUnit;
 use crate::utils::dir_reader::DirReader;
 use crate::utils::file_downloader::FileDownloader;
 use std::path::PathBuf;
@@ -86,7 +86,10 @@ where
         }
     }
 
-    pub fn select_next_element_for_next_dir(&mut self, sender: FSSender) -> Result<(), AppErrorUnit> {
+    pub fn select_next_element_for_next_dir(
+        &mut self,
+        sender: FSSender,
+    ) -> Result<(), AppErrorUnit> {
         self.current_dir.state.select_next();
         self.next_dir = None;
         let c = self.clone();

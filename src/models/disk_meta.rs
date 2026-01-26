@@ -1,7 +1,4 @@
-use crate::{
-    disk_client::DiskMetaResponse,
-    utils::common::bytes_to_gbytes,
-};
+use crate::{disk_client::DiskMetaResponse, utils::common::bytes_to_gbytes};
 
 #[derive(Debug, Clone)]
 pub struct DiskMeta {
@@ -21,11 +18,7 @@ impl From<DiskMetaResponse> for DiskMeta {
 }
 
 impl DiskMeta {
-    pub fn new(
-        used_space: u64,
-        total_space: u64,
-        username: impl Into<String>,
-    ) -> Self {
+    pub fn new(used_space: u64, total_space: u64, username: impl Into<String>) -> Self {
         DiskMeta {
             used_space,
             total_space,

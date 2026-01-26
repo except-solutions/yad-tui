@@ -4,13 +4,12 @@ use std::{ffi::OsString, fmt, io::Error};
 use crate::disk_client::DiskError;
 use jammdb::Error as JammError;
 
-
 pub type AppErrorUnit = AppError<()>;
 
 #[derive(Debug)]
 pub enum AppErrorUnitOrT<T: std::fmt::Debug> {
     AppErrorUnit(AppError<()>),
-    AppErrorT(AppError<T>)
+    AppErrorT(AppError<T>),
 }
 
 #[derive(Debug)]
@@ -25,16 +24,16 @@ pub enum AppError<T: std::fmt::Debug> {
     MultipleErrors(Vec<AppError<T>>),
     LogicalError(String),
     DBError(JammError),
-    SendError(SendError<T>)
+    SendError(SendError<T>),
 }
 
-impl <T: std::fmt::Debug> AppError <T> {
+impl<T: std::fmt::Debug> AppError<T> {
     pub fn invalid_f_name(err_message: &str, f_name: &str) -> AppError<T> {
         AppError::InvalidFileName(format!("{} - {}", err_message.to_string(), f_name))
     }
 }
 
-impl <T: std::fmt::Debug> fmt::Display for AppError<T> {
+impl<T: std::fmt::Debug> fmt::Display for AppError<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AppError::DiskErrors(disk_error) => write!(f, "{}", disk_error),
@@ -59,7 +58,7 @@ impl <T: std::fmt::Debug> fmt::Display for AppError<T> {
             }
             AppError::LogicalError(error) => write!(f, "Logical error: {}", error),
             AppError::DBError(error) => write!(f, "DB error: {}", error),
-            AppError::SendError(error) => write!(f, "Channel Send error: {}", error)
+            AppError::SendError(error) => write!(f, "Channel Send error: {}", error),
         }
     }
 }

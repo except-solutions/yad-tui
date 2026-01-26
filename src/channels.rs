@@ -1,14 +1,10 @@
-use crate::utils::common::AppErrorUnit;
 use crate::models::file::File;
+use crate::utils::common::AppErrorUnit;
 use std::path::PathBuf;
-use std::{
-    sync::mpsc::{Receiver, Sender},
-};
+use std::sync::mpsc::{Receiver, Sender};
 
 use crate::{
-    components::main_screen::next_dir::NextDir,
-    disk_client::DiskClientT,
-    models::model::Model,
+    components::main_screen::next_dir::NextDir, disk_client::DiskClientT, models::model::Model,
 };
 
 pub struct Channels {
@@ -76,7 +72,6 @@ impl Channel for RefreshDirChannel {
     where
         T: DiskClientT,
     {
-
         unimplemented!("Should be implemented in worker only!");
     }
 }
