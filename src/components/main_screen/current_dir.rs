@@ -1,6 +1,6 @@
-use crate::utils::common::AppErrorUnit;
 use crate::error::AppError;
 use crate::models::file::File;
+use crate::utils::common::AppErrorUnit;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Modifier, Style};
 use ratatui::style::palette::material::BLUE;

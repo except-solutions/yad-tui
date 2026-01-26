@@ -47,7 +47,7 @@
           packages = [
             pkgs.cargo-watch
             pkgs.gcc
-            pkgs.lldb
+            #            pkgs.lldb
             pkgs.vscode-extensions.vadimcn.vscode-lldb
             pkgs.rustup
 #            pkgs.lldb_

@@ -60,7 +60,7 @@ pub struct DirItems {
     pub items: Vec<DirItem>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct ItemResponse {
     pub name: String,
     pub resource_id: String,

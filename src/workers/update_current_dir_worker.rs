@@ -1,10 +1,10 @@
-pub(crate) use crate::error::AppErrorUnitOrT;
-use std::path::PathBuf;
-use crate::models::file::File;
 pub use crate::channels::RefreshDirChannel;
 use crate::disk_client::DirItems;
 use crate::error::AppError;
+pub(crate) use crate::error::AppErrorUnitOrT;
+use crate::models::file::File;
 use crate::workers::worker::Worker;
+use std::path::PathBuf;
 use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
@@ -23,7 +23,8 @@ pub struct UpdateCurrentDirWorker<'a> {
 
 impl<'a> Worker for UpdateCurrentDirWorker<'a> {
     type SenderValueType = (DirItem, DirItems);
-    type RunResultType = thread::JoinHandle<Result<(), AppErrorUnitOrT<(PathBuf, (File, Vec<File>))>>>;
+    type RunResultType =
+        thread::JoinHandle<Result<(), AppErrorUnitOrT<(PathBuf, (File, Vec<File>))>>>;
 
     fn run<T>(&self, model: &mut Model<T>) -> (Self, Self::RunResultType)
     where

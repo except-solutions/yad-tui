@@ -1,5 +1,5 @@
-use yad_tui::error::AppErrorUnit;
 use std::path::PathBuf;
+use yad_tui::error::AppErrorUnit;
 use yad_tui::models::file::File;
 use yad_tui::workers::scheduler::Scheduler;
 
