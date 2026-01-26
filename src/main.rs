@@ -29,7 +29,6 @@ use yad_tui::{
 use yad_tui::{
     channels::{Channel, Channels, ReadNextDirChannel},
     components::main_screen::next_dir::NextDir,
-    error::AppError,
     meta_db::init_db,
 };
 

@@ -1,19 +1,13 @@
 use crate::utils::common::AppErrorUnit;
-use crate::disk_client::DirItem;
-use crate::disk_client::DirItems;
 use crate::models::file::File;
-use core::time;
 use std::path::PathBuf;
 use std::{
     sync::mpsc::{Receiver, Sender},
-    thread,
-    time::SystemTime,
 };
 
 use crate::{
-    components::main_screen::{current_dir::CurrentDir, next_dir::NextDir},
+    components::main_screen::next_dir::NextDir,
     disk_client::DiskClientT,
-    error::AppError,
     models::model::Model,
 };
 
@@ -78,7 +72,7 @@ pub struct RefreshDirChannel {
 }
 
 impl Channel for RefreshDirChannel {
-    fn handle<T>(&self, model: &mut Model<T>)
+    fn handle<T>(&self, _model: &mut Model<T>)
     where
         T: DiskClientT,
     {
