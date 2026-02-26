@@ -23,6 +23,7 @@ pub enum Message {
     EnterPrevDir,
     InputModeAction(InputAction),
     DownloadFile,
+    UploadFile,
 }
 
 pub fn update<T: DiskClientT>(
@@ -92,6 +93,10 @@ pub fn update<T: DiskClientT>(
                 .fs
                 .download_selected(channels.download_file_channel.sender.clone())
                 .unwrap();
+            Some(Continue)
+        }
+        (Message::UploadFile, _) => {
+            model.fs.upload_selected();
             Some(Continue)
         }
         (_, _) => Some(Continue),

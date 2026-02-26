@@ -6,7 +6,7 @@ use crate::{
     fs::FS,
     meta_db::Meta,
     models::model::{Model, Popup},
-    utils::{dir_reader::DirReader, file_downloader::FileDownloader},
+    utils::{dir_reader::DirReader, file_downloader::FileDownloader, file_uploader::FileUploader},
 };
 
 const LOGIN_INPUT_MAX_DIGITS: u16 = 999;
@@ -93,10 +93,16 @@ pub fn send_form<T: DiskClientT>(model: &mut Model<T>, code: String) {
                                 config: model.fs.file_downloader.config.clone(),
                             });
 
+                            let new_fu = Arc::new(FileUploader {
+                                disk_client: dc,
+                                config: model.fs.file_downloader.config.clone(),
+                            });
+
                             let new_fs = FS::create(
                                 Arc::new(model.config.clone()),
                                 dr.clone(),
                                 new_fd.clone(),
+                                new_fu,
                             )?;
 
                             model.fs = new_fs;

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
-use yad_tui::error::AppErrorUnit;
 use yad_tui::models::file::File;
 use yad_tui::workers::scheduler::Scheduler;
+use yad_tui::{error::AppErrorUnit, utils::file_uploader::FileUploader};
 
 use yad_tui::workers::update_current_dir_worker::UpdateCurrentDirWorker;
 
@@ -133,7 +133,12 @@ pub(crate) fn main() -> io::Result<()> {
         disk_client: Arc::clone(&disk_client),
     });
 
-    let fs = FS::create(Arc::clone(&config_pointer), dir_reader, fd).unwrap();
+    let fu = Arc::new(FileUploader {
+        config: Arc::clone(&config_pointer),
+        disk_client: Arc::clone(&disk_client),
+    });
+
+    let fs = FS::create(Arc::clone(&config_pointer), dir_reader, fd, fu).unwrap();
     let (mut model, channels) = (
         Model {
             is_auth: meta.api_token.is_some(),
