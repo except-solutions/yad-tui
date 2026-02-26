@@ -1,3 +1,5 @@
+use ratatui::crossterm::event::ModifierKeyCode;
+
 use crate::components::main_screen::next_dir::NextDir;
 use crate::components::main_screen::{current_dir::CurrentDir, previous_dir::PreviousDir};
 use crate::config::Config;
@@ -7,6 +9,7 @@ use crate::utils::common::path_buf_to_string;
 use crate::utils::common::AppErrorUnit;
 use crate::utils::dir_reader::DirReader;
 use crate::utils::file_downloader::FileDownloader;
+use crate::utils::file_uploader::{self, FileUploader};
 use std::path::PathBuf;
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
@@ -22,6 +25,7 @@ pub struct FS<T: DiskClientT> {
     pub next_dir: Option<NextDir>,
     pub dir_reader: Arc<DirReader<T>>,
     pub file_downloader: Arc<FileDownloader<T>>,
+    pub file_uploader: Arc<FileUploader<T>>,
     pub config: Arc<Config>,
 }
 
@@ -33,6 +37,7 @@ where
         config: Arc<Config>,
         dir_reader: Arc<DirReader<T>>,
         file_downloader: Arc<FileDownloader<T>>,
+        file_uploader: Arc<FileUploader<T>>,
     ) -> Result<Self, AppErrorUnit> {
         let path_buf = PathBuf::from("/");
         let path = path_buf;
@@ -60,6 +65,7 @@ where
             next_dir,
             dir_reader,
             file_downloader,
+            file_uploader,
         ))
     }
 }
@@ -75,6 +81,7 @@ where
         next_dir: Option<NextDir>,
         dir_reader: Arc<DirReader<T>>,
         file_downloader: Arc<FileDownloader<T>>,
+        file_uploader: Arc<FileUploader<T>>,
     ) -> Self {
         Self {
             config,
@@ -83,6 +90,7 @@ where
             previous_dir,
             dir_reader,
             file_downloader,
+            file_uploader,
         }
     }
 
@@ -182,10 +190,18 @@ where
     }
 
     pub fn download_selected(&self, sender: Sender<usize>) -> Result<(), AppErrorUnit> {
-        // log::info!("Try download selected file: {}", self.current_dir.selected_file()?.name);
+        log::info!(
+            "Try download selected file: {}",
+            self.current_dir.selected_file()?.name
+        );
         let selected = self.current_dir.selected_file()?;
 
         self.file_downloader.download(sender, selected.clone())?;
+        Ok(())
+    }
+
+    pub fn upload_selected(&self) -> Result<(), AppErrorUnit> {
+        self.file_uploader.upload();
         Ok(())
     }
 }

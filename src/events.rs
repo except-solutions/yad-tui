@@ -34,6 +34,7 @@ where
                         Char('l') | Enter => Some(EnterSelectedDir),
                         Char('h') | Backspace => Some(EnterPrevDir),
                         Char('d') => Some(DownloadFile),
+                        Char('u') => Some(UploadFile),
                         _ => Some(Continue),
                     }
                 };

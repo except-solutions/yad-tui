@@ -10,7 +10,7 @@ use yad_tui::{
         file::{File, NodeType, State},
         model::Model,
     },
-    utils::{dir_reader::DirReader, file_downloader::FileDownloader},
+    utils::{dir_reader::DirReader, file_downloader::FileDownloader, file_uploader::FileUploader},
 };
 
 #[derive(Clone)]
@@ -132,6 +132,11 @@ pub fn create_test_model(
         }],
     );
 
+    let fu = Arc::new(FileUploader {
+        config: Arc::clone(&config_arc),
+        disk_client: Arc::clone(&disk_client),
+    });
+
     let fs_state = FS::new(
         Arc::clone(&config_arc),
         None,
@@ -139,6 +144,7 @@ pub fn create_test_model(
         None,
         Arc::clone(&dir_reader),
         Arc::clone(&file_downloader),
+        Arc::clone(&fu),
     );
 
     let _ = fs::create_dir_all("./tmp");
